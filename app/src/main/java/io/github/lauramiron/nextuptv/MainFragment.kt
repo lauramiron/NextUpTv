@@ -34,7 +34,8 @@ import android.widget.Toast
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
-import com.example.nextuptv.R
+import io.github.lauramiron.nextuptv.AppEntry
+import io.github.lauramiron.nextuptv.AppSource
 
 /**
  * Loads a grid of cards with movies to browse.
@@ -94,7 +95,26 @@ class MainFragment : BrowseSupportFragment() {
         val rowsAdapter = ArrayObjectAdapter(ListRowPresenter())
         val cardPresenter = CardPresenter()
 
-        for (i in 0 until NUM_ROWS) {
+        // Apps Row
+//        val pm = requireActivity().packageManager;
+//        val intent = Intent(Intent.ACTION_MAIN).apply {
+//            addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
+//        }
+
+//        val exclude_apps = setOf(requireContext().packageName, "com.android.tv.settings")
+//        val apps: List<ResolveInfo> = pm.queryIntentActivities(intent, 0).filterNot {
+//            it.activityInfo.packageName in exclude_apps
+//        };
+        val appsSource = AppSource();
+        val apps = appsSource.loadApps(requireContext());
+        val appsRowsAdapter = ArrayObjectAdapter(AppCardPresenter());
+        apps.forEach { appsRowsAdapter.add(it) };
+
+        val header = HeaderItem(0L, "Apps");
+        rowsAdapter.add(ListRow(header, appsRowsAdapter));
+
+        // Other Rows
+        for (i in 1 until NUM_ROWS) {
             if (i != 0) {
                 Collections.shuffle(list)
             }

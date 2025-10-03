@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.nextuptv"
+    namespace = "io.github.lauramiron.nextuptv"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.nextuptv"
+        applicationId = "io.github.lauramiron.nextuptv"
         minSdk = 21
         targetSdk = 36
         versionCode = 1
@@ -39,4 +39,6 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.leanback)
     implementation(libs.glide)
+    implementation(libs.kotlin.stdlib)
+    implementation(libs.androidx.appcompat.resources)
 }

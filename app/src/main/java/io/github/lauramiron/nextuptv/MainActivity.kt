@@ -2,7 +2,6 @@ package io.github.lauramiron.nextuptv
 
 import android.os.Bundle
 import androidx.fragment.app.FragmentActivity
-import com.example.nextuptv.R
 
 /**
  * Loads [MainFragment].
