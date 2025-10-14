@@ -23,6 +23,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -41,4 +42,5 @@ dependencies {
     implementation(libs.glide)
     implementation(libs.kotlin.stdlib)
     implementation(libs.androidx.appcompat.resources)
+    implementation(libs.androidx.appcompat)
 }

@@ -1,10 +1,8 @@
 package io.github.lauramiron.nextuptv
 
-import java.util.Collections
 import java.util.Timer
 import java.util.TimerTask
 
-import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
@@ -14,7 +12,6 @@ import androidx.leanback.app.BackgroundManager
 import androidx.leanback.app.BrowseSupportFragment
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.HeaderItem
-import androidx.leanback.widget.ImageCardView
 import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.OnItemViewClickedListener
@@ -22,7 +19,6 @@ import androidx.leanback.widget.OnItemViewSelectedListener
 import androidx.leanback.widget.Presenter
 import androidx.leanback.widget.Row
 import androidx.leanback.widget.RowPresenter
-import androidx.core.app.ActivityOptionsCompat
 import androidx.core.content.ContextCompat
 import android.util.DisplayMetrics
 import android.util.Log
@@ -34,8 +30,6 @@ import android.widget.Toast
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
-import io.github.lauramiron.nextuptv.AppEntry
-import io.github.lauramiron.nextuptv.AppSource
 
 /**
  * Loads a grid of cards with movies to browse.
@@ -71,10 +65,10 @@ class MainFragment : BrowseSupportFragment() {
     private fun prepareBackgroundManager() {
 
         mBackgroundManager = BackgroundManager.getInstance(activity)
-        mBackgroundManager.attach(activity!!.window)
-        mDefaultBackground = ContextCompat.getDrawable(activity!!, R.drawable.default_background)
+        mBackgroundManager.attach(requireActivity().window)
+        mDefaultBackground = ContextCompat.getDrawable(requireActivity(), R.drawable.default_background)
         mMetrics = DisplayMetrics()
-        activity!!.windowManager.defaultDisplay.getMetrics(mMetrics)
+        requireActivity().windowManager.defaultDisplay.getMetrics(mMetrics)
     }
 
     private fun setupUIElements() {
@@ -84,63 +78,67 @@ class MainFragment : BrowseSupportFragment() {
         isHeadersTransitionOnBackEnabled = true
 
         // set fastLane (or headers) background color
-        brandColor = ContextCompat.getColor(activity!!, R.color.fastlane_background)
+        brandColor = ContextCompat.getColor(requireActivity(), R.color.fastlane_background)
         // set search icon color
-        searchAffordanceColor = ContextCompat.getColor(activity!!, R.color.search_opaque)
+        searchAffordanceColor = ContextCompat.getColor(requireActivity(), R.color.search_opaque)
+    }
+
+    private fun addDeepLinkTestRow(rowsAdapter: ArrayObjectAdapter) {
+        // Replace IDs with ones you want to test
+        val tests = listOf(
+            DeepLinkItem("Stranger Things", "80077368"),
+            DeepLinkItem("Dark", "80114790"),
+            DeepLinkItem("Black Mirror", "81716301")
+        )
+
+        val cardPresenter = DeepLinkTestCardPresenter()
+        val rowAdapter = ArrayObjectAdapter(cardPresenter).apply {
+            tests.forEach { add(it) }
+        }
+
+        val header = HeaderItem(1000L, "Netflix Deep Link Tests")
+        rowsAdapter.add(ListRow(header, rowAdapter))
     }
 
     private fun loadRows() {
-        val list = MovieList.list
-
         val rowsAdapter = ArrayObjectAdapter(ListRowPresenter())
-        val cardPresenter = CardPresenter()
 
-        // Apps Row
-//        val pm = requireActivity().packageManager;
-//        val intent = Intent(Intent.ACTION_MAIN).apply {
-//            addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
-//        }
+        val appsSource = AppSource()
+        val apps = appsSource.loadApps(requireContext())
+        val appsRowsAdapter = ArrayObjectAdapter(AppCardPresenter())
+        apps.forEach { appsRowsAdapter.add(it) }
 
-//        val exclude_apps = setOf(requireContext().packageName, "com.android.tv.settings")
-//        val apps: List<ResolveInfo> = pm.queryIntentActivities(intent, 0).filterNot {
-//            it.activityInfo.packageName in exclude_apps
-//        };
-        val appsSource = AppSource();
-        val apps = appsSource.loadApps(requireContext());
-        val appsRowsAdapter = ArrayObjectAdapter(AppCardPresenter());
-        apps.forEach { appsRowsAdapter.add(it) };
+        val header = HeaderItem(0L, "Apps")
+        rowsAdapter.add(ListRow(header, appsRowsAdapter))
 
-        val header = HeaderItem(0L, "Apps");
-        rowsAdapter.add(ListRow(header, appsRowsAdapter));
-
-        // Other Rows
-        for (i in 1 until NUM_ROWS) {
-            if (i != 0) {
-                Collections.shuffle(list)
+        // Resume Watching Row
+        val resumeEntries = ResumeSource().load(requireContext())
+        if (resumeEntries.isNotEmpty()) {
+            val resumeAdapter = ArrayObjectAdapter(ResumeCardPresenter()).apply {
+                resumeEntries.forEach { add(it) }
             }
-            val listRowAdapter = ArrayObjectAdapter(cardPresenter)
-            for (j in 0 until NUM_COLS ) {
-                listRowAdapter.add(list[j % 5])
-            }
-            val header = HeaderItem(i.toLong(), MovieList.MOVIE_CATEGORY[i])
-            rowsAdapter.add(ListRow(header, listRowAdapter))
+            rowsAdapter.add(ListRow(HeaderItem(1L, "Resume Watching"), resumeAdapter))
         }
 
-        val gridHeader = HeaderItem(NUM_ROWS.toLong(), "PREFERENCES")
+        // Test Deeplinks row
+        addDeepLinkTestRow(rowsAdapter);
 
-        val mGridPresenter = GridItemPresenter()
-        val gridRowAdapter = ArrayObjectAdapter(mGridPresenter)
-        gridRowAdapter.add(resources.getString(R.string.grid_view))
-        gridRowAdapter.add(getString(R.string.error_fragment))
-        gridRowAdapter.add(resources.getString(R.string.personal_settings))
-        rowsAdapter.add(ListRow(gridHeader, gridRowAdapter))
+
+//        val gridHeader = HeaderItem(NUM_ROWS.toLong(), "PREFERENCES")
+//
+//        val mGridPresenter = GridItemPresenter()
+//        val gridRowAdapter = ArrayObjectAdapter(mGridPresenter)
+//        gridRowAdapter.add(resources.getString(R.string.grid_view))
+//        gridRowAdapter.add(getString(R.string.error_fragment))
+//        gridRowAdapter.add(resources.getString(R.string.personal_settings))
+//        rowsAdapter.add(ListRow(gridHeader, gridRowAdapter))
 
         adapter = rowsAdapter
     }
 
     private fun setupEventListeners() {
         setOnSearchClickedListener {
-            Toast.makeText(activity!!, "Implement your own in-app search", Toast.LENGTH_LONG)
+            Toast.makeText(requireActivity(), "Implement your own in-app search", Toast.LENGTH_LONG)
                 .show()
         }
 
@@ -150,28 +148,29 @@ class MainFragment : BrowseSupportFragment() {
 
     private inner class ItemViewClickedListener : OnItemViewClickedListener {
         override fun onItemClicked(
-                itemViewHolder: Presenter.ViewHolder,
-                item: Any,
-                rowViewHolder: RowPresenter.ViewHolder,
-                row: Row) {
+            itemViewHolder: Presenter.ViewHolder,
+            item: Any,
+            rowViewHolder: RowPresenter.ViewHolder,
+            row: Row
+        ) {
+            when (item) {
 
-            if (item is Movie) {
-                Log.d(TAG, "Item: " + item.toString())
-                val intent = Intent(activity!!, DetailsActivity::class.java)
-                intent.putExtra(DetailsActivity.MOVIE, item)
+                // If your adapter stores a custom AppEntry
+                is AppEntry -> {
+                    val pm = requireContext().packageManager
+                    val launch = pm.getLeanbackLaunchIntentForPackage(item.packageName)
+                        ?: pm.getLaunchIntentForPackage(item.packageName)
+                    if (launch != null) {
+//                        launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        startActivity(launch)
+                    } else {
+                        Toast.makeText(requireContext(),
+                            "Can't launch ${item.label}", Toast.LENGTH_SHORT).show()
+                    }
+                }
 
-                val bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(
-                                                activity!!,
-                                                (itemViewHolder.view as ImageCardView).mainImageView,
-                                                DetailsActivity.SHARED_ELEMENT_NAME)
-                                        .toBundle()
-                startActivity(intent, bundle)
-            } else if (item is String) {
-                if (item.contains(getString(R.string.error_fragment))) {
-                    val intent = Intent(activity!!, BrowseErrorActivity::class.java)
-                    startActivity(intent)
-                } else {
-                    Toast.makeText(activity!!, item, Toast.LENGTH_SHORT).show()
+                is DeepLinkItem -> {
+                    DeeplinkTester.launch(requireContext(), item.netflixId)
                 }
             }
         }
@@ -190,7 +189,7 @@ class MainFragment : BrowseSupportFragment() {
     private fun updateBackground(uri: String?) {
         val width = mMetrics.widthPixels
         val height = mMetrics.heightPixels
-        Glide.with(activity!!)
+        Glide.with(requireActivity())
                 .load(uri)
                 .centerCrop()
                 .error(mDefaultBackground)

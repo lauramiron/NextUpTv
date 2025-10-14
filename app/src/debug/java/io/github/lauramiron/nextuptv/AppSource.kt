@@ -2,7 +2,7 @@ package io.github.lauramiron.nextuptv
 
 import android.content.Context
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.core.content.ContextCompat
+
 class AppSource {
     fun loadApps(context: Context): List<AppEntry> {
         fun d(resId: Int) = AppCompatResources.getDrawable(context, resId)
