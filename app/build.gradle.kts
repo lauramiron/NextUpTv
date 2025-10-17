@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "io.github.lauramiron.nextuptv"
-        minSdk = 21
+        minSdk = 23
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -43,4 +43,12 @@ dependencies {
     implementation(libs.kotlin.stdlib)
     implementation(libs.androidx.appcompat.resources)
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.room.common.jvm)
+    implementation(libs.androidx.databinding.adapters)
+    implementation(libs.androidx.room.ktx)
+    implementation("com.squareup.retrofit2:retrofit:3.0.0")
+    implementation("com.squareup.retrofit2:converter-moshi:3.0.0")
+    implementation(libs.androidx.databinding.compiler)
+    implementation(libs.androidx.work.runtime.ktx)
+
 }
