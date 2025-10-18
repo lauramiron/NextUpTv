@@ -1,4 +1,4 @@
-package io.github.lauramiron.nextuptv.data.MovieNightRepository.remote
+package io.github.lauramiron.nextuptv.data.remote.movienight
 
 // data/remote/dto/ShowDto.kt
 data class TitleDto(

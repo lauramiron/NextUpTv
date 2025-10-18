@@ -1,4 +1,4 @@
-package io.github.lauramiron.nextuptv.data.MovieNightRepository.local
+package io.github.lauramiron.nextuptv.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -25,8 +25,7 @@ data class TitleEntity(
     val runtimeMin: Int?,
     val language: String?,
     val maturityRating: String?,
-    val posterUrl: String?,
-    val backdropUrl: String?,
+    val imageSetJson: String?,          // JSON string of the imageSet object
     val sourceUpdatedAt: Long?,        // from API (epoch ms or ISO->ms)
     val localUpdatedAt: Long = System.currentTimeMillis()
 )
@@ -72,7 +71,7 @@ data class EpisodeEntity(
     val synopsis: String?,
     val runtimeMin: Int?,
     val airDate: String?,              // keep as ISO string or epoch
-    val stillUrl: String?,
+    val imageSetJson: String?,     // NEW: entire episode-level imageSet blob
     val sourceUpdatedAt: Long?,
     val localUpdatedAt: Long = System.currentTimeMillis()
 )

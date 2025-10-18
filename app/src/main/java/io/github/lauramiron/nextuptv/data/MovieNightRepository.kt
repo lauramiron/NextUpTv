@@ -1,4 +1,4 @@
-package io.github.lauramiron.nextuptv.data.MovieNightRepository
+package io.github.lauramiron.nextuptv.data
 
 
 import retrofit2.http.GET
@@ -6,11 +6,11 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 import androidx.room.withTransaction
-import io.github.lauramiron.nextuptv.data.MovieNightRepository.local.AppDb
-import io.github.lauramiron.nextuptv.data.MovieNightRepository.local.ExternalIdEntity
-import io.github.lauramiron.nextuptv.data.MovieNightRepository.mappers.toEntity
-import io.github.lauramiron.nextuptv.data.MovieNightRepository.remote.EpisodeDto
-import io.github.lauramiron.nextuptv.data.MovieNightRepository.remote.TitleDto
+import io.github.lauramiron.nextuptv.data.local.AppDb
+import io.github.lauramiron.nextuptv.data.local.entity.ExternalIdEntity
+import io.github.lauramiron.nextuptv.data.mappers.toEntity
+import io.github.lauramiron.nextuptv.data.remote.movienight.EpisodeDto
+import io.github.lauramiron.nextuptv.data.remote.movienight.TitleDto
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

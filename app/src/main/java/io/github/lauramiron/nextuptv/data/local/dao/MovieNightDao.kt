@@ -1,9 +1,12 @@
-package io.github.lauramiron.nextuptv.data.MovieNightRepository.local
+package io.github.lauramiron.nextuptv.data.local.dao
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import io.github.lauramiron.nextuptv.data.local.entity.EpisodeEntity
+import io.github.lauramiron.nextuptv.data.local.entity.ExternalIdEntity
+import io.github.lauramiron.nextuptv.data.local.entity.TitleEntity
 
 @Dao
 interface TitleDao {

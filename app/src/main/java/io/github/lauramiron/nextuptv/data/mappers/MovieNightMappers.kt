@@ -1,10 +1,10 @@
-package io.github.lauramiron.nextuptv.data.MovieNightRepository.mappers
+package io.github.lauramiron.nextuptv.data.mappers
 
-import io.github.lauramiron.nextuptv.data.MovieNightRepository.local.EpisodeEntity
-import io.github.lauramiron.nextuptv.data.MovieNightRepository.local.TitleEntity
-import io.github.lauramiron.nextuptv.data.MovieNightRepository.local.TitleKind
-import io.github.lauramiron.nextuptv.data.MovieNightRepository.remote.EpisodeDto
-import io.github.lauramiron.nextuptv.data.MovieNightRepository.remote.TitleDto
+import io.github.lauramiron.nextuptv.data.local.entity.EpisodeEntity
+import io.github.lauramiron.nextuptv.data.local.entity.TitleEntity
+import io.github.lauramiron.nextuptv.data.local.entity.TitleKind
+import io.github.lauramiron.nextuptv.data.remote.movienight.EpisodeDto
+import io.github.lauramiron.nextuptv.data.remote.movienight.TitleDto
 
 fun TitleDto.toEntity(): TitleEntity {
     // TODO

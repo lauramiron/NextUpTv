@@ -1,6 +1,9 @@
-package io.github.lauramiron.nextuptv.data.MovieNightRepository.local
+package io.github.lauramiron.nextuptv.data.local
 
 import androidx.room.TypeConverter
+import io.github.lauramiron.nextuptv.data.local.entity.ArtworkType
+import io.github.lauramiron.nextuptv.data.local.entity.CreditRole
+import io.github.lauramiron.nextuptv.data.local.entity.TitleKind
 
 class Converters {
     @TypeConverter
