@@ -15,7 +15,7 @@ class ResumeSyncWorker(
     private val repo: ResumeRepository
 ) : CoroutineWorker(ctx, params) {
     override suspend fun doWork(): Result {
-        repo.syncResume(limit = 100)
+//        repo.syncResume(limit = 100)
         return Result.success()
     }
 }
@@ -29,9 +29,4 @@ val req = PeriodicWorkRequestBuilder<ResumeSyncWorker>(6, TimeUnit.HOURS)
     )
     .build()
 
-WorkManager.getInstance(context)
-    .enqueueUniquePeriodicWork(
-"resume-sync",
-ExistingPeriodicWorkPolicy.UPDATE,
-req
-)
+//WorkManager.getInstance(context).enqueueUniquePeriodicWork("resume-sync", ExistingPeriodicWorkPolicy.UPDATE, req)

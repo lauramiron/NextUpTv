@@ -1,21 +1,29 @@
 package io.github.lauramiron.nextuptv.data.mappers
 
 import io.github.lauramiron.nextuptv.data.local.entity.CreditRole
-import io.github.lauramiron.nextuptv.data.local.entity.EpisodeEntity
 import io.github.lauramiron.nextuptv.data.local.entity.ExternalIdEntity
-import io.github.lauramiron.nextuptv.data.local.entity.GenreEntity
 import io.github.lauramiron.nextuptv.data.local.entity.PersonEntity
 import io.github.lauramiron.nextuptv.data.local.entity.TitleEntity
 import io.github.lauramiron.nextuptv.data.local.entity.TitleKind
 import io.github.lauramiron.nextuptv.data.local.entity.TitlePersonCrossRef
-import io.github.lauramiron.nextuptv.data.remote.movienight.EpisodeDto
 import io.github.lauramiron.nextuptv.data.remote.movienight.StreamingOptionDto
 import io.github.lauramiron.nextuptv.data.remote.movienight.TitleDto
-import java.util.Locale
 
 fun TitleDto.toEntity(): TitleEntity {
-    // TODO
-    return TitleEntity(0, this.id, TitleKind.MOVIE, this.title, this.overview, this.releaseYear, null, null, null, null, 0, 0);
+    val kind = when (showType?.lowercase()) {
+        "series", "tv", "show" -> TitleKind.SERIES
+        "movie", null, ""      -> TitleKind.MOVIE
+        else                   -> TitleKind.MOVIE
+    }
+    return TitleEntity(
+        id=0L,
+        monId = this.id,
+        kind = kind,
+        name = this.title,
+        synopsis = this.overview,
+        year = this.releaseYear,
+        runtimeMin = this.runtime,
+        imageSetJson = this.imageSet?.toString());
 }
 
 //fun EpisodeDto.toEntity(titleId: Long): EpisodeEntity {
@@ -134,9 +142,9 @@ private fun TitleDto.isSeries(): Boolean =
 fun StreamingOptionDto.toExternalIdEntity(titleId: Long): ExternalIdEntity {
     val provider = service.id.lowercase()
     val providerId = when (provider) {
-        "netflix" -> parseNetflixId(link)
-        else -> "null" // add cases for disney/hbo/prime/etc later
-    }.toString()
+        "netflix" -> parseNetflixId(link ?: videoLink) ?: "unknown"
+        else -> "unknown" // add cases for disney/hbo/prime/etc later
+    }
     return ExternalIdEntity(
         provider = provider,
         providerId = providerId,

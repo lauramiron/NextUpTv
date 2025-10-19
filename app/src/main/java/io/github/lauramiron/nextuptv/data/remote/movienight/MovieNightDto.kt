@@ -59,19 +59,19 @@ data class StreamingServiceDto(
 //    val addon: AddonDto? = null
 //)
 
-data class EpisodeDto(
-    val id: String,
-    val mon_id: String,
-    val seasonNumber: Int?,
-    val episodeNumber: Int?,
-    val name: String?,
-    val synopsis: String?,
-    val runtimeMin: Int?,
-    val airDate: String?,              // keep as ISO string or epoch
-    val stillUrl: String?,
-    val sourceUpdatedAt: Long?,
-    val localUpdatedAt: Long = System.currentTimeMillis()
-)
+//data class EpisodeDto(
+//    val id: String,
+//    val mon_id: String,
+//    val seasonNumber: Int?,
+//    val episodeNumber: Int?,
+//    val name: String?,
+//    val synopsis: String?,
+//    val runtimeMin: Int?,
+//    val airDate: String?,              // keep as ISO string or epoch
+//    val stillUrl: String?,
+//    val sourceUpdatedAt: Long?,
+//    val localUpdatedAt: Long = System.currentTimeMillis()
+//)
 
 data class ShowSearchResponseDto(
     val shows: List<TitleDto>,

@@ -22,12 +22,14 @@ class MovieNightSyncWorker(
         val mode = inputData.getString("mode")?.let { SyncMode.valueOf(it) } ?: SyncMode.FULL
         return when (mode) {
             SyncMode.FULL -> runFullSync()
-            SyncMode.INCREMENTAL -> runIncrementalSync(
-                since = inputData.getLong("since_epoch_ms", 0L)
-            )
-            SyncMode.SINGLE_TITLE -> syncSingleTitle(
-                monId = inputData.getString("mon_id") ?: return Result.failure()
-            )
+            SyncMode.INCREMENTAL -> runFullSync()
+            SyncMode.SINGLE_TITLE -> runFullSync()
+//            SyncMode.INCREMENTAL -> runIncrementalSync(
+//                since = inputData.getLong("since_epoch_ms", 0L)
+//            )
+//            SyncMode.SINGLE_TITLE -> syncSingleTitle(
+//                monId = inputData.getString("mon_id") ?: return Result.failure()
+//            )
         }
     }
 
@@ -36,15 +38,15 @@ class MovieNightSyncWorker(
         return Result.success()
     }
 
-    private suspend fun runIncrementalSync(since: Long): Result {
-        repo.syncUpdatedSince(since)
-        return Result.success()
-    }
+//    private suspend fun runIncrementalSync(since: Long): Result {
+//        repo.syncUpdatedSince(since)
+//        return Result.success()
+//    }
 
-    private suspend fun syncSingleTitle(monId: String): Result {
-        repo.syncTitle(monId)
-        return Result.success()
-    }
+//    private suspend fun syncSingleTitle(monId: String): Result {
+//        repo.syncTitle(monId)
+//        return Result.success()
+//    }
 
     companion object {
         const val KEY_MON_IDS = "mon_ids"

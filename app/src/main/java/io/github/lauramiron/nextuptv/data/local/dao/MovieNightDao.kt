@@ -5,7 +5,6 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
-import io.github.lauramiron.nextuptv.data.local.entity.EpisodeEntity
 import io.github.lauramiron.nextuptv.data.local.entity.ExternalIdEntity
 import io.github.lauramiron.nextuptv.data.local.entity.GenreEntity
 import io.github.lauramiron.nextuptv.data.local.entity.PersonEntity
@@ -18,8 +17,8 @@ interface TitleDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertIgnore(entity: TitleEntity): Long
 
-    @Update
-    suspend fun update(entity: TitleEntity)
+    //@Update
+    //suspend fun update(entity: TitleEntity)
 
     @Query("SELECT * FROM titles WHERE id = :id")
     fun getTitle(id: Long): TitleEntity?
@@ -32,7 +31,7 @@ interface TitleDao {
         val insertId = insertIgnore(entity)
         if (insertId != -1L) return insertId
         val existingId = findIdByMonId(entity.monId) ?: error("Title missing after IGNORE")
-        update(entity.copy(id = existingId))
+        //update(entity.copy(id = existingId))
         return existingId
     }
 
@@ -45,43 +44,43 @@ interface TitleDao {
 //    fun getTitleByExternal(provider: String, providerId: String): TitleEntity?
 }
 
-@Dao
-interface EpisodeDao {
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertIgnoreAll(items: List<EpisodeEntity>): List<Long>
-
-    @Update
-    suspend fun updateAll(items: List<EpisodeEntity>)
-
-    @Query("""
-        SELECT id FROM episodes 
-        WHERE titleId = :titleId AND 
-              ((:season IS NULL AND seasonNumber IS NULL) OR seasonNumber = :season) AND
-              ((:ep IS NULL AND episodeNumber IS NULL) OR episodeNumber = :ep)
-        LIMIT 1
-    """)
-    suspend fun findIdByNaturalKey(
-        titleId: Long,
-        season: Int?,
-        ep: Int?
-    ): Long?
-
-    @Transaction
-    suspend fun upsertAll(items: List<EpisodeEntity>): Int {
-        if (items.isEmpty()) return 0
-        val results = insertIgnoreAll(items)
-        val toUpdate = mutableListOf<EpisodeEntity>()
-        results.forEachIndexed { i, rowId ->
-            if (rowId == -1L) {
-                val e = items[i]
-                val id = findIdByNaturalKey(e.titleId, e.seasonNumber, e.episodeNumber)
-                if (id != null) toUpdate += e.copy(id = id)
-            }
-        }
-        if (toUpdate.isNotEmpty()) updateAll(toUpdate)
-        return items.size
-    }
-}
+//@Dao
+//interface EpisodeDao {
+//    @Insert(onConflict = OnConflictStrategy.IGNORE)
+//    suspend fun insertIgnoreAll(items: List<EpisodeEntity>): List<Long>
+//
+//    @Update
+//    suspend fun updateAll(items: List<EpisodeEntity>)
+//
+//    @Query("""
+//        SELECT id FROM episodes
+//        WHERE titleId = :titleId AND
+//              ((:season IS NULL AND seasonNumber IS NULL) OR seasonNumber = :season) AND
+//              ((:ep IS NULL AND episodeNumber IS NULL) OR episodeNumber = :ep)
+//        LIMIT 1
+//    """)
+//    suspend fun findIdByNaturalKey(
+//        titleId: Long,
+//        season: Int?,
+//        ep: Int?
+//    ): Long?
+//
+//    @Transaction
+//    suspend fun upsertAll(items: List<EpisodeEntity>): Int {
+//        if (items.isEmpty()) return 0
+//        val results = insertIgnoreAll(items)
+//        val toUpdate = mutableListOf<EpisodeEntity>()
+//        results.forEachIndexed { i, rowId ->
+//            if (rowId == -1L) {
+//                val e = items[i]
+//                val id = findIdByNaturalKey(e.titleId, e.seasonNumber, e.episodeNumber)
+//                if (id != null) toUpdate += e.copy(id = id)
+//            }
+//        }
+//        if (toUpdate.isNotEmpty()) updateAll(toUpdate)
+//        return items.size
+//    }
+//}
 
 @Dao
 interface ExternalIdDao {
@@ -185,7 +184,7 @@ interface PersonDao {
         if (items.isEmpty()) return emptyList()
         val ids = MutableList(items.size) { -1L }
         val results = insertIgnoreAll(items)
-        val toUpdate = mutableListOf<PersonEntity>()
+//        val toUpdate = mutableListOf<PersonEntity>()
         results.forEachIndexed { i, rowId ->
             if (rowId != -1L) {
                 ids[i] = rowId
@@ -193,10 +192,10 @@ interface PersonDao {
                 val existing = findIdByName(items[i].name) ?: return@forEachIndexed
                 ids[i] = existing
                 // If you track other mutable columns on PersonEntity, update them here.
-                 toUpdate += items[i].copy(id = existing)
+//                toUpdate += items[i].copy(id = existing)
             }
         }
-        if (toUpdate.isNotEmpty()) updateAll(toUpdate)
+//        if (toUpdate.isNotEmpty()) updateAll(toUpdate)
         return ids
     }
 }

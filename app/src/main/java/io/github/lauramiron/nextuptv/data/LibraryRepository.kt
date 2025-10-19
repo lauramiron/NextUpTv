@@ -1,30 +1,13 @@
 package io.github.lauramiron.nextuptv.data
 
-
-import androidx.room.withTransaction
 import io.github.lauramiron.nextuptv.data.local.AppDb
-import io.github.lauramiron.nextuptv.data.local.dao.EpisodeDao
 import io.github.lauramiron.nextuptv.data.local.dao.ExternalIdDao
 import io.github.lauramiron.nextuptv.data.local.dao.GenreDao
 import io.github.lauramiron.nextuptv.data.local.dao.PersonDao
 import io.github.lauramiron.nextuptv.data.local.dao.TitleDao
 import io.github.lauramiron.nextuptv.data.local.dao.TitleGenreCrossRefDao
 import io.github.lauramiron.nextuptv.data.local.dao.TitlePersonCrossRefDao
-import io.github.lauramiron.nextuptv.data.local.entity.CreditRole
-import io.github.lauramiron.nextuptv.data.local.entity.ExternalIdEntity
-import io.github.lauramiron.nextuptv.data.local.entity.PersonEntity
-import io.github.lauramiron.nextuptv.data.local.entity.TitleEntity
-import io.github.lauramiron.nextuptv.data.local.entity.TitleGenreCrossRef
-import io.github.lauramiron.nextuptv.data.local.entity.TitlePersonCrossRef
-import io.github.lauramiron.nextuptv.data.mappers.extractUsStreamingOptions
-import io.github.lauramiron.nextuptv.data.mappers.toCast
-import io.github.lauramiron.nextuptv.data.mappers.toDirectors
-import io.github.lauramiron.nextuptv.data.mappers.toEntity
-import io.github.lauramiron.nextuptv.data.mappers.toExternalIdEntity
-import io.github.lauramiron.nextuptv.data.mappers.toGenreNames
 import io.github.lauramiron.nextuptv.data.remote.movienight.MovieNightApi
-import io.github.lauramiron.nextuptv.data.remote.movienight.StreamingOptionDto
-import io.github.lauramiron.nextuptv.data.remote.movienight.TitleDto
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 
@@ -32,7 +15,6 @@ class LibraryRepository(
     private val api: MovieNightApi,
     private val db: AppDb,
     private val titleDao: TitleDao,
-    private val episodeDao: EpisodeDao,
     private val externalIdDao: ExternalIdDao,
     private val genreDao: GenreDao,
     private val personDao: PersonDao,
@@ -67,21 +49,6 @@ class LibraryRepository(
     ): SyncReport {
         val report = SyncReport()
 
-        api.fetchShowsPagingFlow(
-            catalogs = catalogs,
-            startCursor = startCursor,
-            maxPages = maxPages
-        ).collect { page ->
-            db.withTransaction {
-                // For each TitleDto in this page, map and upsert
-                page.shows.forEach { dto ->
-                    upsertOneTitleTree(dto, report)
-                }
-            }
-            report.pages += 1
-            report.lastCursor = page.nextCursor
-        }
-
         return report
     }
 
@@ -89,7 +56,7 @@ class LibraryRepository(
      * Maps a TitleDto (and nested episodes/ids/credits/genres) to entities and upserts them.
      * Increments the provided report counters.
      */
-    private suspend fun upsertOneTitleTree(dto: TitleDto, report: SyncReport) {
+    /*private suspend fun upsertOneTitleTree(dto: TitleDto, report: SyncReport) {
         // 1) Title
         val titleEntity: TitleEntity = dto.toEntity() // your mapper sets: name, kind, year, imageSetJson, etc.
         val titleId: Long = titleDao.upsert(titleEntity)
@@ -111,11 +78,11 @@ class LibraryRepository(
         // 4) People (directors/cast/writers …), then cross-ref
         val cast: List<PersonEntity> = dto.toCast()
         val castPersonIds = personDao.upsertAll(cast)
-        val castPersonRefs = castPersonIds.map { it -> TitlePersonCrossRef(titleId = titleId, personId = it, role = CreditRole.CAST ) }
+        val castPersonRefs = castPersonIds.map { it -> TitlePersonCrossRef(id = 0, titleId = titleId, personId = it, role = CreditRole.CAST ) }
 
         val directors: List<PersonEntity> = dto.toDirectors()
         val directorPersonIds = personDao.upsertAll(directors)
-        val directorPersonRefs = castPersonIds.map { it -> TitlePersonCrossRef(titleId = titleId, personId = it, role = CreditRole.DIRECTOR ) }
+        val directorPersonRefs = directorPersonIds.map { it -> TitlePersonCrossRef(id = 0, titleId = titleId, personId = it, role = CreditRole.DIRECTOR ) }
 
         val personRefs = castPersonRefs + directorPersonRefs
         report.titlePersonRefs += titlePersonDao.upsertAll(personRefs)
@@ -130,7 +97,7 @@ class LibraryRepository(
         // 6) Optional: minimal streaming options (serviceId-only), if you persist them.
         // If you decided to inline or skip, this can be omitted or kept in mapper side-effects.
         // e.g., streamingOptionDao.upsertAll(dto.toStreamingOptions(titleId))
-    }
+    }*/
 
 
 //    suspend fun syncTitle(monId: String) = withContext(io) {
