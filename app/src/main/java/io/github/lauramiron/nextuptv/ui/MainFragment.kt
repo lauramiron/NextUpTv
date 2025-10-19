@@ -1,4 +1,4 @@
-package io.github.lauramiron.nextuptv
+package io.github.lauramiron.nextuptv.ui
 
 import java.util.Timer
 import java.util.TimerTask
@@ -30,6 +30,10 @@ import android.widget.Toast
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
+import io.github.lauramiron.nextuptv.AppSource
+import io.github.lauramiron.nextuptv.R
+import io.github.lauramiron.nextuptv.ResumeSource
+import kotlin.collections.forEach
 
 /**
  * Loads a grid of cards with movies to browse.

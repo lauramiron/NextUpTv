@@ -4,7 +4,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ResolveInfo
-import io.github.lauramiron.nextuptv.AppEntry
+import io.github.lauramiron.nextuptv.ui.AppEntry
 
 class AppSource {
     fun loadApps(context: Context): List<AppEntry> {

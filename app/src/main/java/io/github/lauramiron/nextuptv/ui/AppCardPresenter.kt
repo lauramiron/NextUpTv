@@ -1,5 +1,6 @@
-package io.github.lauramiron.nextuptv
+package io.github.lauramiron.nextuptv.ui
 
+import android.R
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.ImageCardView
@@ -23,7 +24,7 @@ class AppCardPresenter : Presenter() {
         card.titleText = entry.label
         card.mainImage = entry.icon
             ?: runCatching { pm.getApplicationIcon(entry.packageName) }.getOrNull()
-            ?: ContextCompat.getDrawable(card.context, android.R.drawable.ic_menu_help)
+            ?: ContextCompat.getDrawable(card.context, R.drawable.ic_menu_help)
     }
 
     override fun onUnbindViewHolder(viewHolder: ViewHolder) {

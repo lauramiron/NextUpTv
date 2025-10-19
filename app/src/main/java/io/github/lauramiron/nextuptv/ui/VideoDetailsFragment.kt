@@ -1,4 +1,4 @@
-package io.github.lauramiron.nextuptv
+package io.github.lauramiron.nextuptv.ui
 
 import android.content.Context
 import android.content.Intent
@@ -30,6 +30,7 @@ import android.widget.Toast
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
+import io.github.lauramiron.nextuptv.R
 
 import java.util.Collections
 

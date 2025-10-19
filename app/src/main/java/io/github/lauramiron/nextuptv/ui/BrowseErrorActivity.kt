@@ -1,4 +1,4 @@
-package io.github.lauramiron.nextuptv
+package io.github.lauramiron.nextuptv.ui
 
 import android.os.Bundle
 import android.os.Handler
@@ -11,6 +11,7 @@ import android.widget.FrameLayout
 import android.widget.ProgressBar
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
+import io.github.lauramiron.nextuptv.R
 
 /**
  * BrowseErrorActivity shows how to use ErrorFragment.

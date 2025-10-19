@@ -1,10 +1,11 @@
-package io.github.lauramiron.nextuptv
+package io.github.lauramiron.nextuptv.ui
 
 import android.os.Bundle
 import android.view.View
 
 import androidx.core.content.ContextCompat
 import androidx.leanback.app.ErrorSupportFragment
+import io.github.lauramiron.nextuptv.R
 
 /**
  * This class demonstrates how to extend [ErrorSupportFragment].

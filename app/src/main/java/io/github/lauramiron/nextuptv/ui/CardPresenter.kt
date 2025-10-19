@@ -1,4 +1,4 @@
-package io.github.lauramiron.nextuptv
+package io.github.lauramiron.nextuptv.ui
 
 import android.graphics.drawable.Drawable
 import androidx.leanback.widget.ImageCardView
@@ -8,6 +8,7 @@ import android.util.Log
 import android.view.ViewGroup
 
 import com.bumptech.glide.Glide
+import io.github.lauramiron.nextuptv.R
 import kotlin.properties.Delegates
 
 /**

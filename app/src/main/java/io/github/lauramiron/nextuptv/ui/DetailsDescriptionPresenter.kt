@@ -1,4 +1,4 @@
-package io.github.lauramiron.nextuptv
+package io.github.lauramiron.nextuptv.ui
 
 import androidx.leanback.widget.AbstractDetailsDescriptionPresenter
 

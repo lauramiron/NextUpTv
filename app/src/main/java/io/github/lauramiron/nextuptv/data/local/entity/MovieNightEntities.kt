@@ -17,7 +17,7 @@ enum class CreditRole { CAST, DIRECTOR, WRITER }
 )
 data class TitleEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val mon_id: String,                // MovieOfTheNight canonical ID for the title
+    val monId: String,                // MovieOfTheNight canonical ID for the title
     val kind: TitleKind,
     val name: String,
     val synopsis: String?,
@@ -30,26 +30,26 @@ data class TitleEntity(
     val localUpdatedAt: Long = System.currentTimeMillis()
 )
 
-// ---- SEASONS (only for SERIES) ----
-@Entity(
-    tableName = "seasons",
-    indices = [Index(value = ["titleId", "seasonNumber"], unique = true)],
-    foreignKeys = [
-        ForeignKey(
-            entity = TitleEntity::class,
-            parentColumns = ["id"], childColumns = ["titleId"],
-            onDelete = ForeignKey.CASCADE, onUpdate = ForeignKey.CASCADE
-        )
-    ]
-)
-data class SeasonEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val titleId: Long,                 // FK -> titles.id
-    val seasonNumber: Int,
-    val name: String?,
-    val synopsis: String?,
-    val posterUrl: String?
-)
+//// ---- SEASONS (only for SERIES) ----
+//@Entity(
+//    tableName = "seasons",
+//    indices = [Index(value = ["titleId", "seasonNumber"], unique = true)],
+//    foreignKeys = [
+//        ForeignKey(
+//            entity = TitleEntity::class,
+//            parentColumns = ["id"], childColumns = ["titleId"],
+//            onDelete = ForeignKey.CASCADE, onUpdate = ForeignKey.CASCADE
+//        )
+//    ]
+//)
+//data class SeasonEntity(
+//    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+//    val titleId: Long,                 // FK -> titles.id
+//    val seasonNumber: Int,
+//    val name: String?,
+//    val synopsis: String?,
+//    val posterUrl: String?
+//)
 
 // ---- EPISODES ----
 @Entity(
@@ -76,20 +76,20 @@ data class EpisodeEntity(
     val localUpdatedAt: Long = System.currentTimeMillis()
 )
 
-// ---- ARTWORK (posters, backdrops, logos) ----
-@Entity(
-    tableName = "artwork",
-    indices = [Index("titleId"), Index("episodeId")]
-)
-data class ArtworkEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val titleId: Long?,                // for title-level art
-    val episodeId: Long?,              // or episode-level art
-    val type: ArtworkType,
-    val url: String,
-    val width: Int?,
-    val height: Int?
-)
+//// ---- ARTWORK (posters, backdrops, logos) ----
+//@Entity(
+//    tableName = "artwork",
+//    indices = [Index("titleId"), Index("episodeId")]
+//)
+//data class ArtworkEntity(
+//    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+//    val titleId: Long?,                // for title-level art
+//    val episodeId: Long?,              // or episode-level art
+//    val type: ArtworkType,
+//    val url: String,
+//    val width: Int?,
+//    val height: Int?
+//)
 
 // ---- GENRES ----
 @Entity(tableName = "genres", indices = [Index(value = ["name"], unique = true)])
@@ -108,6 +108,7 @@ data class GenreEntity(
     ]
 )
 data class TitleGenreCrossRef(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val titleId: Long,
     val genreId: Long
 )
@@ -128,24 +129,25 @@ data class PersonEntity(
         ForeignKey(entity = PersonEntity::class, parentColumns = ["id"], childColumns = ["personId"], onDelete = ForeignKey.CASCADE)
     ]
 )
-data class CreditEntity(
+data class TitlePersonCrossRef(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val titleId: Long?,                // for movie/series-level credit
-    val episodeId: Long?,              // or episode-level credit
     val personId: Long,
     val role: CreditRole,
-    val characterName: String?
 )
 
 // ---- EXTERNAL IDS (lookup by Netflix/etc or by MovieOfTheNight itself) ----
 @Entity(
     tableName = "external_ids",
-    indices = [Index(value = ["provider", "providerId"], unique = true), Index("entityType"), Index("entityId")])
+    indices = [Index(value = ["entityId", "provider"], unique = true), Index("entityId")])
 data class ExternalIdEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val entityType: String,            // "title" | "episode"
+//    val entityType: String,            // "title" | "episode"
     val entityId: Long,                // FK to titles.id or episodes.id (enforce in code)
     val provider: String,              // e.g. "mon" | "netflix" | "tmdb" | "imdb"
     val providerId: String,
-//    val region: String? = null         // optional (e.g., "US")
+    val available: Boolean,
+    val price: Short
+//    val showLink: String,
+//    val videoLink: String
 )

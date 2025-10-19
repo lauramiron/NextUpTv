@@ -1,7 +1,8 @@
-package io.github.lauramiron.nextuptv
+package io.github.lauramiron.nextuptv.ui
 
 import android.os.Bundle
 import androidx.fragment.app.FragmentActivity
+import io.github.lauramiron.nextuptv.R
 
 /**
  * Details activity class that loads [VideoDetailsFragment] class.

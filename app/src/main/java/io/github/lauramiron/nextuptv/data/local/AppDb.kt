@@ -9,7 +9,7 @@ import io.github.lauramiron.nextuptv.data.local.dao.ExternalIdDao
 import io.github.lauramiron.nextuptv.data.local.dao.ResumeDao
 import io.github.lauramiron.nextuptv.data.local.dao.TitleDao
 import io.github.lauramiron.nextuptv.data.local.entity.ArtworkEntity
-import io.github.lauramiron.nextuptv.data.local.entity.CreditEntity
+import io.github.lauramiron.nextuptv.data.local.entity.TitlePersonCrossRef
 import io.github.lauramiron.nextuptv.data.local.entity.EpisodeEntity
 import io.github.lauramiron.nextuptv.data.local.entity.ExternalIdEntity
 import io.github.lauramiron.nextuptv.data.local.entity.GenreEntity
@@ -22,7 +22,7 @@ import io.github.lauramiron.nextuptv.data.local.entity.TitleGenreCrossRef
     entities = [
         TitleEntity::class, SeasonEntity::class, EpisodeEntity::class,
         ArtworkEntity::class, GenreEntity::class, TitleGenreCrossRef::class,
-        PersonEntity::class, CreditEntity::class, ExternalIdEntity::class
+        PersonEntity::class, TitlePersonCrossRef::class, ExternalIdEntity::class
     ],
     version = 1, exportSchema = true
 )

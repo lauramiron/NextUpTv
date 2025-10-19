@@ -35,26 +35,29 @@ data class ImageSetDto(
 
 data class StreamingOptionDto(
     val service: StreamingServiceDto,
-    val type: String,             // subscription/rent/buy/addon
     val link: String?,
     val videoLink: String?,
-    val quality: String?,
-    val audios: List<AudioDto> = emptyList(),
-    val subtitles: List<SubtitleDto> = emptyList(),
-    val expiresSoon: Boolean?,
-    val expiresOn: Long?,
-    val availableSince: Long?,
     val price: PriceDto? = null,
-    val addon: AddonDto? = null
 )
 
 data class StreamingServiceDto(
     val id: String,               // "netflix"
-    val name: String,             // "Netflix"
-    val homePage: String?,
-    val themeColorCode: String?,
-    val imageSet: Map<String, String>? = null
 )
+
+//data class StreamingOptionDto(
+//    val service: StreamingServiceDto,
+//    val type: String,             // subscription/rent/buy/addon
+//    val link: String?,
+//    val videoLink: String?,
+//    val quality: String?,
+//    val audios: List<AudioDto> = emptyList(),
+//    val subtitles: List<SubtitleDto> = emptyList(),
+//    val expiresSoon: Boolean?,
+//    val expiresOn: Long?,
+//    val availableSince: Long?,
+//    val price: PriceDto? = null,
+//    val addon: AddonDto? = null
+//)
 
 data class EpisodeDto(
     val id: String,
@@ -68,6 +71,12 @@ data class EpisodeDto(
     val stillUrl: String?,
     val sourceUpdatedAt: Long?,
     val localUpdatedAt: Long = System.currentTimeMillis()
+)
+
+data class ShowSearchResponseDto(
+    val shows: List<TitleDto>,
+    val hasMore: Boolean,
+    val nextCursor: String?
 )
 
 data class AudioDto(val language: String?, val region: String? = null)

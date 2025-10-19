@@ -1,5 +1,6 @@
 package io.github.lauramiron.nextuptv.sync
 
+import android.content.Context
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -7,21 +8,41 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import androidx.work.workDataOf
+import io.github.lauramiron.nextuptv.data.LibraryRepository
 
+enum class SyncMode { FULL, INCREMENTAL, SINGLE_TITLE }
 class MovieNightSyncWorker(
     ctx: Context,
     params: WorkerParameters,
-    private val repo: MovieNightRepository
+    private val repo: LibraryRepository
 ) : CoroutineWorker(ctx, params) {
 
     override suspend fun doWork(): Result {
-        // strategy: pull recent/changed titles; or sync everything on first run
-        val targets = inputData.getStringArray(KEY_MON_IDS)?.toList().orEmpty()
-        targets.forEach { monId ->
-            try { repo.syncTitle(monId) } catch (t: Throwable) {
-                // log and continue; or return Result.retry()
-            }
+        val mode = inputData.getString("mode")?.let { SyncMode.valueOf(it) } ?: SyncMode.FULL
+        return when (mode) {
+            SyncMode.FULL -> runFullSync()
+            SyncMode.INCREMENTAL -> runIncrementalSync(
+                since = inputData.getLong("since_epoch_ms", 0L)
+            )
+            SyncMode.SINGLE_TITLE -> syncSingleTitle(
+                monId = inputData.getString("mon_id") ?: return Result.failure()
+            )
         }
+    }
+
+    private suspend fun runFullSync(): Result {
+        repo.syncAll()
+        return Result.success()
+    }
+
+    private suspend fun runIncrementalSync(since: Long): Result {
+        repo.syncUpdatedSince(since)
+        return Result.success()
+    }
+
+    private suspend fun syncSingleTitle(monId: String): Result {
+        repo.syncTitle(monId)
         return Result.success()
     }
 

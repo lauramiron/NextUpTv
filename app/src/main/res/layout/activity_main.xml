@@ -5,6 +5,6 @@
     android:id="@+id/main_browse_fragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="io.github.lauramiron.nextuptv.MainActivity"
+    tools:context="io.github.lauramiron.nextuptv.ui.MainActivity"
     tools:deviceIds="tv"
     tools:ignore="MergeRootFrame" />

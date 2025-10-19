@@ -1,12 +1,13 @@
-package io.github.lauramiron.nextuptv
+package io.github.lauramiron.nextuptv.ui
 
-import android.R.attr.indeterminate
+import android.R
 import android.graphics.PorterDuff
 import android.graphics.drawable.Drawable
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ProgressBar
+import androidx.appcompat.widget.AppCompatImageView
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.ImageCardView
 import androidx.leanback.widget.Presenter
@@ -29,7 +30,7 @@ class ResumeCardPresenter : Presenter() {
         ))
 
         // Progress bar overlay
-        val progress = ProgressBar(parent.context, null, android.R.attr.progressBarStyleHorizontal).apply {
+        val progress = ProgressBar(parent.context, null, R.attr.progressBarStyleHorizontal).apply {
             max = 100
             // style it lightly; or use a custom drawable
 //            indeterminate = 1
@@ -43,7 +44,7 @@ class ResumeCardPresenter : Presenter() {
         container.addView(progress, progressLp)
 
         // Badge (app icon) in the corner
-        val badge = androidx.appcompat.widget.AppCompatImageView(parent.context).apply {
+        val badge = AppCompatImageView(parent.context).apply {
             adjustViewBounds = true
             visibility = View.VISIBLE
         }
@@ -73,8 +74,8 @@ class ResumeCardPresenter : Presenter() {
         // Poster (fallback to a neutral placeholder)
         val poster: Drawable = entry.poster
             ?: runCatching { pm.getApplicationIcon(entry.appPackage) }.getOrNull()
-            ?: ContextCompat.getDrawable(card.context, R.drawable.ic_placeholder_poster)
-            ?: ContextCompat.getDrawable(card.context, android.R.drawable.ic_menu_report_image)!!
+            ?: ContextCompat.getDrawable(card.context, io.github.lauramiron.nextuptv.R.drawable.ic_placeholder_poster)
+            ?: ContextCompat.getDrawable(card.context, R.drawable.ic_menu_report_image)!!
 
         card.mainImage = poster
 
@@ -100,6 +101,6 @@ class ResumeCardPresenter : Presenter() {
     private data class Holder(
         val card: ImageCardView,
         val progress: ProgressBar,
-        val badge: androidx.appcompat.widget.AppCompatImageView
+        val badge: AppCompatImageView
     )
 }
