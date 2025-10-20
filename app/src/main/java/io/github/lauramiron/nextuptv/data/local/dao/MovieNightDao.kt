@@ -17,14 +17,17 @@ interface TitleDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertIgnore(entity: TitleEntity): Long
 
-    //@Update
-    //suspend fun update(entity: TitleEntity)
+    @Update
+    suspend fun update(entity: TitleEntity)
 
     @Query("SELECT * FROM titles WHERE id = :id")
     fun getTitle(id: Long): TitleEntity?
 
     @Query("SELECT id FROM titles WHERE monId = :monId LIMIT 1")
     suspend fun findIdByMonId(monId: String): Long?
+
+    @Query("SELECT COUNT(*) FROM titles")
+    suspend fun countAll(): Int
 
     @Transaction
     suspend fun upsert(entity: TitleEntity): Long {
@@ -203,11 +206,11 @@ interface PersonDao {
 @Dao
 interface TitleGenreCrossRefDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun upsertAll(items: List<TitleGenreCrossRef>): Int
+    suspend fun upsertAll(items: List<TitleGenreCrossRef>): List<Long>
 }
 
 @Dao
 interface TitlePersonCrossRefDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun upsertAll(items: List<TitlePersonCrossRef>): Int
+    suspend fun upsertAll(items: List<TitlePersonCrossRef>): List<Long>
 }

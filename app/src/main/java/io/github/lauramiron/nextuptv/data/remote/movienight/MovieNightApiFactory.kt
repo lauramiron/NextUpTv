@@ -8,7 +8,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.util.concurrent.TimeUnit
 
-object MovieNightServiceFactory {
+object MovieNightApiFactory {
     fun create(
         apiBaseUrl: String = "https://streaming-availability.p.rapidapi.com/",
         apiKey: String,
@@ -37,7 +37,7 @@ object MovieNightServiceFactory {
             .client(clientBuilder.build())
             .build()
 
-        val service = retrofit.create(MovieNightService::class.java)
+        val service = retrofit.create(MovieNightApiService::class.java)
         return MovieNightApi(service, apiKey)
     }
 }

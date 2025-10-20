@@ -37,6 +37,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.junit.ktx)
     kapt("androidx.room:room-compiler:2.8.2")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.leanback)
@@ -53,4 +54,27 @@ dependencies {
     implementation("com.squareup.moshi:moshi-kotlin:1.15.1")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.13")
+    testImplementation("androidx.test:core:1.6.1")
+
+    // Room testing
+    testImplementation("androidx.room:room-testing:<version>")
+    testImplementation("androidx.room:room-ktx:<version>")
+
+    // Coroutines testing
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:<version>")
+
+//    // Retrofit/OkHttp
+//    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+//    testImplementation("com.squareup.retrofit2:retrofit:<version>")
+//    testImplementation("com.squareup.retrofit2:converter-moshi:<version>")
+//    testImplementation("com.squareup.moshi:moshi-kotlin:<version>")
+
+    // WorkManager test utils (only if your sync is driven by WorkManager)
+    androidTestImplementation("androidx.work:work-testing:<version>")
+    testImplementation("androidx.work:work-testing:<version>")
+    testImplementation(kotlin("test"))
+    testImplementation("com.google.truth:truth:1.1.5")
 }

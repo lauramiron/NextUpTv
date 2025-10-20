@@ -12,7 +12,7 @@ import androidx.work.workDataOf
 import io.github.lauramiron.nextuptv.data.LibraryRepository
 
 enum class SyncMode { FULL, INCREMENTAL, SINGLE_TITLE }
-class MovieNightSyncWorker(
+class LibrarySyncWorker(
     ctx: Context,
     params: WorkerParameters,
     private val repo: LibraryRepository
@@ -59,7 +59,7 @@ class MovieNightSyncWorker(
 
             val data = workDataOf(KEY_MON_IDS to monIds.toTypedArray())
 
-            val request = PeriodicWorkRequestBuilder<MovieNightSyncWorker>(12, java.util.concurrent.TimeUnit.HOURS)
+            val request = PeriodicWorkRequestBuilder<LibrarySyncWorker>(12, java.util.concurrent.TimeUnit.HOURS)
                 .setConstraints(constraints)
                 .setInputData(data)
                 .build()
