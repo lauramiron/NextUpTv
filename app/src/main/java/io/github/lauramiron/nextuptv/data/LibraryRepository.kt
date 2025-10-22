@@ -36,7 +36,19 @@ class LibraryRepository(
         var titleGenreRefs: Int = 0,
         var titlePersonRefs: Int = 0,
         var lastCursor: String? = null
-    )
+    ) {
+        operator fun plusAssign(other: SyncReport) {
+            this.pages += other.pages
+            this.titlesUpserted += other.titlesUpserted
+            this.episodesUpserted += other.episodesUpserted
+            this.externalIdsUpserted += other.externalIdsUpserted
+            this.genresUpserted += other.genresUpserted
+            this.peopleUpserted += other.peopleUpserted
+            this.titleGenreRefs += other.titleGenreRefs
+            this.titlePersonRefs += other.titlePersonRefs
+            this.lastCursor = other.lastCursor
+        }
+    }
 
     /**
      * Full library sync from MovieOfTheNight (RapidAPI) into local Room DB.
@@ -48,28 +60,51 @@ class LibraryRepository(
     suspend fun syncAll(
         catalogs: String = "netflix",
         startCursor: String? = null,
-        maxPages: Int? = null
+        maxPages: Int = -1
     ): SyncReport {
         val report = SyncReport()
+        var pagesProcessed = 0
+        var cursor = startCursor
 
-//        val titleDto = api.getTitle()
+        do {
+            val (titleDtos, nextCursor) = api.fetchAllShows(catalogs=catalogs, startCursor=cursor, maxPages=1)
+
+            val pageReport = SyncReport()
+            titleDtos.forEach { titleDto ->
+                pageReport += upsertOneTitleTree(titleDto)
+            }
+
+            pagesProcessed++
+            report.pages = pagesProcessed
+            report += pageReport
+            cursor = nextCursor
+
+            println("Page $pagesProcessed: ${titleDtos.size} titles | " +
+                    "+${pageReport.titlesUpserted} titles, " +
+                    "+${pageReport.genresUpserted} genres, " +
+                    "+${pageReport.peopleUpserted} people")
+
+        } while (((maxPages == -1) || (pagesProcessed < maxPages)) && (cursor != null))
+
         return report
     }
 
     /**
      * Maps a TitleDto (and nested episodes/ids/credits/genres) to entities and upserts them.
-     * Increments the provided report counters.
+     * Returns a report of what was inserted/updated.
      */
-    internal suspend fun upsertOneTitleTree(dto: TitleDto, report: SyncReport) {
+    internal suspend fun upsertOneTitleTree(dto: TitleDto): SyncReport {
+        val report = SyncReport()
+
         // 1) Title
         val titleEntity: TitleEntity = dto.toEntity() // your mapper sets: name, kind, year, imageSetJson, etc.
         val titleId: Long = db.titleDao().upsert(titleEntity)
-        report.titlesUpserted += 1
+        report.titlesUpserted = 1
 
         // 2) External IDs
         val streamingOptions: List<StreamingOptionDto> = dto.extractUsStreamingOptions()
         val externalIdEntities = streamingOptions.map { it.toExternalIdEntity(titleId) }
-        report.externalIdsUpserted += db.externalIdDao().upsertAll(externalIdEntities)
+        report.externalIdsUpserted = db.externalIdDao().upsertAll(externalIdEntities)
 
         // 3) Genres (name->entity), then cross-ref
         val genreNames: List<String> = dto.toGenreNames() // mapper normalizes ids/names from response
@@ -81,8 +116,8 @@ class LibraryRepository(
             )
         }
         val genreRefIds = db.titleGenreDao().upsertAll(genreRefs)
-        report.titleGenreRefs += genreRefIds.size
-        report.genresUpserted += genreIds.count { it > 0 } // count new rows if your DAO returns rowIds
+        report.titleGenreRefs = genreRefIds.size
+        report.genresUpserted = genreIds.count { it > 0 } // count new rows if your DAO returns rowIds
 
         // 4) People (directors/cast/writers …), then cross-ref
         val cast: List<PersonEntity> = dto.toCast()
@@ -102,36 +137,35 @@ class LibraryRepository(
 
         val personRefs = castPersonRefs + directorPersonRefs
         val personRefIds = db.titlePersonDao().upsertAll(personRefs)
-        report.titlePersonRefs += personRefIds.size
-        report.peopleUpserted += castPersonIds.count() + directorPersonIds.count()
+        report.titlePersonRefs = personRefIds.size
+        report.peopleUpserted = castPersonIds.count() + directorPersonIds.count()
 
 //        // 5) Episodes (for shows). Your mapper returns per-episode entities with titleId set.
 //        val episodes: List<EpisodeEntity> = dto.toEpisodes(titleId) // or emptyList for movies
 //        if (episodes.isNotEmpty()) {
-//            report.episodesUpserted += episodeDao.upsertAll(episodes)
+//            report.episodesUpserted = episodeDao.upsertAll(episodes)
 //        }
 
         // 6) Optional: minimal streaming options (serviceId-only), if you persist them.
         // If you decided to inline or skip, this can be omitted or kept in mapper side-effects.
         // e.g., streamingOptionDao.upsertAll(dto.toStreamingOptions(titleId))
+
+        return report
     }
 
 
     suspend fun syncTitle(monId: String): SyncReport = withContext(io) {
-        val report = SyncReport()
-
         try {
             val titleDto = api.getTitle(monId)
 
             db.withTransaction {
-                upsertOneTitleTree(titleDto, report)
+                upsertOneTitleTree(titleDto)
             }
 
         } catch (e: Exception) {
-            // Log error but don't throw - return report with counts
+            // Log error but don't throw - return empty report
             println("Error syncing title $monId: ${e.message}")
+            SyncReport()
         }
-
-        report
     }
 }

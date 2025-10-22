@@ -49,7 +49,6 @@ class MovieNightApi(
         val out = mutableListOf<TitleDto>()
         var cursor = startCursor
         var pages = 0
-        var lastNextCursor: String? = null
 
         do {
             val resp = retrying {
@@ -63,13 +62,12 @@ class MovieNightApi(
 
             out += resp.shows
             pages += 1
-            lastNextCursor = resp.nextCursor
             cursor = resp.nextCursor
 
             val more = resp.hasMore && (maxPages == null || pages < maxPages)
         } while (more)
 
-        return out to lastNextCursor
+        return out to cursor
     }
 
     /**

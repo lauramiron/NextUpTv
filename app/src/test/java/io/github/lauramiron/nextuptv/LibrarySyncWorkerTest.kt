@@ -29,6 +29,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
 import java.util.concurrent.Executors
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 @RunWith(AndroidJUnit4::class)
 class LibrarySyncWorkerTest {
@@ -44,12 +46,7 @@ class LibrarySyncWorkerTest {
     fun setUp() {
         context = ApplicationProvider.getApplicationContext()
 
-        // 1) Build in-memory DB, but seed from snapshot if it exists
-//        db = Room.inMemoryDatabaseBuilder(context, AppDb::class.java)
-//            .allowMainThreadQueries() // ok in tests
-////            .addCallback(DbSnapshotUtils.seedingCallback())
-//            .build()
-
+        // 1) Build file-backed in-memory DB
         db = Room.databaseBuilder(context, AppDb::class.java, File(System.getProperty("user.dir"), "build/test-db/wm-snapshot.db").absolutePath).fallbackToDestructiveMigration().build()
 
         // 2) Construct repository against this DB (and fake API if needed)
@@ -72,13 +69,12 @@ class LibrarySyncWorkerTest {
     fun tearDown() {
         // 4) Export a snapshot of the in-memory DB to a file for future seeding and manual inspection
 //        DbSnapshotUtils.exportSnapshot(db.openHelper.writableDatabase)
+        println("Snapshot written to: ${DbSnapshotUtils.snapshotFile.absolutePath}")
         db.close()
     }
 
     @Test
     fun `sync worker populates titles and snapshot is exported`() = runTest {
-        // Optional: seed API responses if using MockWebServer
-
         // 5) Enqueue the worker
         val req = OneTimeWorkRequestBuilder<LibrarySyncWorker>()
             .setInputData(workDataOf("catalogs" to "netflix"))
@@ -96,9 +92,6 @@ class LibrarySyncWorkerTest {
         // 8) Assert DB state with your DAO(s)
         val rowCount = db.titleDao().countAll() // replace with your DAO/query
         assertTrue("Expected titles to be inserted", rowCount > 0)
-
-        // 9) Print snapshot location for convenience
-        println("Snapshot written to: ${DbSnapshotUtils.snapshotFile.absolutePath}")
     }
 
     @Test
@@ -131,41 +124,6 @@ class LibrarySyncWorkerTest {
 
     @Test
     fun `test repository can process single title`() = runTest {
-        // Test the repository's ability to process a single title
-        val api = MovieNightApiFactory.create(apiKey="96da59657emsh4a212c55a8a0cdep152371jsnc0a31a8bc448")
-
-        try {
-            // Get one page of titles
-            val (titles, _) = api.fetchAllShows(catalogs = "netflix", maxPages = 1)
-            assertTrue("Need at least one title for test", titles.isNotEmpty())
-
-            val firstTitle = titles.first()
-            println("=== Testing Repository with: ${firstTitle.title} ===")
-
-            // Process this title through the repository
-            val report = LibraryRepository.SyncReport()
-            repository.upsertOneTitleTree(firstTitle, report)
-
-            println("Sync report:")
-            println("- Titles upserted: ${report.titlesUpserted}")
-            println("- External IDs: ${report.externalIdsUpserted}")
-            println("- Genres: ${report.genresUpserted}")
-            println("- People: ${report.peopleUpserted}")
-            println("- Title-Genre refs: ${report.titleGenreRefs}")
-            println("- Title-Person refs: ${report.titlePersonRefs}")
-
-            // Verify data was inserted
-            val titleCount = db.titleDao().countAll()
-            assertTrue("Title should be inserted", titleCount > 0)
-
-        } catch (e: Exception) {
-            println("Repository test failed: ${e.message}")
-            throw e
-        }
-    }
-
-    @Test
-    fun `test syncTitle stores data correctly in database`() = runTest {
         try {
             val monId = "54321" // Using the same test ID
 
@@ -242,6 +200,128 @@ class LibrarySyncWorkerTest {
 
         } catch (e: Exception) {
             println("❌ syncTitle database test failed: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
+    }
+
+    @Test
+    fun `test repository can process single page`() = runTest {
+        try {
+            println("=== Testing sync of 1st page of netflix results ===")
+
+            // Get initial database counts
+            val initialTitleCount = db.titleDao().countAll()
+            println("Initial title count: $initialTitleCount")
+
+            // Sync the title
+            val report = repository.syncAll("netflix", maxPages=1)
+
+            println("=== Sync Report ===")
+            println("Titles upserted: ${report.titlesUpserted}")
+            println("External IDs upserted: ${report.externalIdsUpserted}")
+            println("Genres upserted: ${report.genresUpserted}")
+            println("People upserted: ${report.peopleUpserted}")
+            println("Title-Genre refs: ${report.titleGenreRefs}")
+            println("Title-Person refs: ${report.titlePersonRefs}")
+            println()
+
+            // Verify title was inserted
+            val finalTitleCount = db.titleDao().countAll()
+            println("Final title count: $finalTitleCount")
+            assertTrue("Titles should be inserted", finalTitleCount > initialTitleCount)
+
+            // Verify external IDs were stored
+            if (report.externalIdsUpserted > 0) {
+                println("✅ ${report.externalIdsUpserted} genres were stored")
+            }
+
+            // Verify genres were stored if any
+            if (report.genresUpserted > 0) {
+                println("✅ ${report.genresUpserted} genres were stored")
+            }
+
+            // Verify people were stored if any
+            if (report.peopleUpserted > 0) {
+                println("✅ ${report.peopleUpserted} people were stored")
+            }
+
+            // Verify cross-references
+            if (report.titleGenreRefs > 0) {
+                println("✅ ${report.titleGenreRefs} title-genre relationships created")
+            }
+            if (report.titlePersonRefs > 0) {
+                println("✅ ${report.titlePersonRefs} title-person relationships created")
+            }
+
+            println("✅ syncTitle database test completed successfully!")
+
+        } catch (e: Exception) {
+            println("❌ syncTitle database test failed: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
+    }
+
+    @Test
+    fun `test repository can process netflix`() = runTest(timeout = 600_000.seconds) { // 10 minute timeout
+        try {
+            println("=== Testing full sync of netflix catalog ===")
+            println("NOTE: This may take several minutes. For unlimited timeout, use LibrarySyncCliTest instead.")
+            println()
+
+            // Get initial database counts
+            val initialTitleCount = db.titleDao().countAll()
+            println("Initial title count: $initialTitleCount")
+
+            val startTime = System.currentTimeMillis()
+
+            // Sync all netflix titles
+            val report = repository.syncAll("netflix")
+
+            val elapsed = (System.currentTimeMillis() - startTime) / 1000.0
+            println()
+            println("=== Sync Report (completed in ${elapsed}s) ===")
+            println("Titles upserted: ${report.titlesUpserted}")
+            println("External IDs upserted: ${report.externalIdsUpserted}")
+            println("Genres upserted: ${report.genresUpserted}")
+            println("People upserted: ${report.peopleUpserted}")
+            println("Title-Genre refs: ${report.titleGenreRefs}")
+            println("Title-Person refs: ${report.titlePersonRefs}")
+            println()
+
+            // Verify title was inserted
+            val finalTitleCount = db.titleDao().countAll()
+            println("Final title count: $finalTitleCount")
+            assertTrue("Titles should be inserted", finalTitleCount > initialTitleCount)
+
+            // Verify external IDs were stored
+            if (report.externalIdsUpserted > 0) {
+                println("✅ ${report.externalIdsUpserted} external IDs were stored")
+            }
+
+            // Verify genres were stored if any
+            if (report.genresUpserted > 0) {
+                println("✅ ${report.genresUpserted} genres were stored")
+            }
+
+            // Verify people were stored if any
+            if (report.peopleUpserted > 0) {
+                println("✅ ${report.peopleUpserted} people were stored")
+            }
+
+            // Verify cross-references
+            if (report.titleGenreRefs > 0) {
+                println("✅ ${report.titleGenreRefs} title-genre relationships created")
+            }
+            if (report.titlePersonRefs > 0) {
+                println("✅ ${report.titlePersonRefs} title-person relationships created")
+            }
+
+            println("✅ Full Netflix sync completed successfully!")
+
+        } catch (e: Exception) {
+            println("❌ Netflix sync failed: ${e.message}")
             e.printStackTrace()
             throw e
         }
