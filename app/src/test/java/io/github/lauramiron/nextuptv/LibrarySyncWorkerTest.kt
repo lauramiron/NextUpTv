@@ -46,8 +46,9 @@ class LibrarySyncWorkerTest {
     fun setUp() {
         context = ApplicationProvider.getApplicationContext()
 
-        // 1) Build file-backed in-memory DB
-        db = Room.databaseBuilder(context, AppDb::class.java, File(System.getProperty("user.dir"), "build/test-db/wm-snapshot.db").absolutePath).fallbackToDestructiveMigration().build()
+        // 1) Build database directly in app's files directory where it will be used
+        val dbFile = File(context.filesDir, "wm-snapshot.db")
+        db = Room.databaseBuilder(context, AppDb::class.java, dbFile.absolutePath).fallbackToDestructiveMigration().build()
 
         // 2) Construct repository against this DB (and fake API if needed)
         repository = LibraryRepository(
@@ -67,9 +68,9 @@ class LibrarySyncWorkerTest {
 
     @After
     fun tearDown() {
-        // 4) Export a snapshot of the in-memory DB to a file for future seeding and manual inspection
-//        DbSnapshotUtils.exportSnapshot(db.openHelper.writableDatabase)
-        println("Snapshot written to: ${DbSnapshotUtils.snapshotFile.absolutePath}")
+        val dbPath = db.openHelper.writableDatabase.path
+        println("Snapshot saved to: $dbPath")
+        println("This will be automatically loaded when running debug builds on emulator")
         db.close()
     }
 
