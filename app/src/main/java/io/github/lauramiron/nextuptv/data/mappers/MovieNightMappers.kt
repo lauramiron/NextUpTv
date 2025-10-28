@@ -3,6 +3,7 @@ package io.github.lauramiron.nextuptv.data.mappers
 import io.github.lauramiron.nextuptv.data.local.entity.CreditRole
 import io.github.lauramiron.nextuptv.data.local.entity.ExternalIdEntity
 import io.github.lauramiron.nextuptv.data.local.entity.PersonEntity
+import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
 import io.github.lauramiron.nextuptv.data.local.entity.TitleEntity
 import io.github.lauramiron.nextuptv.data.local.entity.TitleKind
 import io.github.lauramiron.nextuptv.data.local.entity.TitlePersonCrossRef
@@ -139,12 +140,15 @@ fun TitleDto.toTitlePersonRefs(
 private fun TitleDto.isSeries(): Boolean =
     this.showType.equals("series", true)
 
-fun StreamingOptionDto.toExternalIdEntity(titleId: Long): ExternalIdEntity {
-    val provider = service.id.lowercase()
+fun StreamingOptionDto.toExternalIdEntity(titleId: Long): ExternalIdEntity? {
+    val providerString = service.id.lowercase()
+    val provider = StreamingService.fromString(providerString) ?: return null // skip unsupported providers
+
     val providerId = when (provider) {
-        "netflix" -> parseNetflixId(link ?: videoLink) ?: "unknown"
+        StreamingService.NETFLIX -> parseNetflixId(link ?: videoLink) ?: "unknown"
         else -> "unknown" // add cases for disney/hbo/prime/etc later
     }
+
     return ExternalIdEntity(
         provider = provider,
         providerId = providerId,

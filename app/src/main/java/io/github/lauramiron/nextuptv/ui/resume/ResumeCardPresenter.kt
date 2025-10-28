@@ -1,4 +1,4 @@
-package io.github.lauramiron.nextuptv.ui
+package io.github.lauramiron.nextuptv.ui.resume
 
 import android.R
 import android.graphics.PorterDuff
@@ -61,7 +61,7 @@ class ResumeCardPresenter : Presenter() {
     }
 
     override fun onBindViewHolder(viewHolder: ViewHolder, item: Any?) {
-        val entry = item as ResumeEntry
+        val entry = item as ResumeItem
         val container = viewHolder.view as FrameLayout
         val holder = container.tag as Holder
         val card = holder.card

@@ -1,4 +1,6 @@
-package io.github.lauramiron.nextuptv.ui
+package io.github.lauramiron.nextuptv.ui.details
+
+import io.github.lauramiron.nextuptv.ui.details.MovieItem
 
 object MovieList {
     val MOVIE_CATEGORY = arrayOf(
@@ -9,12 +11,12 @@ object MovieList {
             "Category Four",
             "Category Five")
 
-    val list: List<Movie> by lazy {
+    val list: List<MovieItem> by lazy {
         setupMovies()
     }
     private var count: Long = 0
 
-    private fun setupMovies(): List<Movie> {
+    private fun setupMovies(): List<MovieItem> {
         val title = arrayOf(
                 "Zeitgeist 2010_ Year in Review",
                 "Google Demo Slam_ 20ft Search",
@@ -72,15 +74,15 @@ object MovieList {
             studio: String,
             videoUrl: String,
             cardImageUrl: String,
-            backgroundImageUrl: String): Movie {
-        val movie = Movie()
-        movie.id = count++
-        movie.title = title
-        movie.description = description
-        movie.studio = studio
-        movie.cardImageUrl = cardImageUrl
-        movie.backgroundImageUrl = backgroundImageUrl
-        movie.videoUrl = videoUrl
-        return movie
+            backgroundImageUrl: String): MovieItem {
+        val movieItem = MovieItem()
+        movieItem.id = count++
+        movieItem.title = title
+        movieItem.description = description
+        movieItem.studio = studio
+        movieItem.cardImageUrl = cardImageUrl
+        movieItem.backgroundImageUrl = backgroundImageUrl
+        movieItem.videoUrl = videoUrl
+        return movieItem
     }
 }

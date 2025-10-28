@@ -1,9 +1,9 @@
-package io.github.lauramiron.nextuptv.ui
+package io.github.lauramiron.nextuptv.ui.resume
 
 import android.content.Intent
 import android.graphics.drawable.Drawable
 
-data class ResumeEntry(
+data class ResumeItem(
     val title: String,                 // “Stranger Things”
     val subtitle: String,              // “S2 • E3 • The Pollywog”
     val progressPercent: Int,          // 0..100

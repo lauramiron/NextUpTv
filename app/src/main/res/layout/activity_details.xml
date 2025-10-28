@@ -5,5 +5,5 @@
     android:id="@+id/details_fragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="io.github.lauramiron.nextuptv.ui.DetailsActivity"
+    tools:context="io.github.lauramiron.nextuptv.ui.details.DetailsActivity"
     tools:deviceIds="tv" />

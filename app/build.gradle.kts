@@ -15,6 +15,12 @@ android {
         versionCode = 1
         versionName = "1.0"
 
+        // Add your RapidAPI key here (get it from https://rapidapi.com/)
+        buildConfigField("String", "RAPIDAPI_KEY", "\"YOUR_API_KEY_HERE\"")
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {
@@ -73,8 +79,8 @@ dependencies {
 //    testImplementation("com.squareup.moshi:moshi-kotlin:<version>")
 
     // WorkManager test utils (only if your sync is driven by WorkManager)
-    androidTestImplementation("androidx.work:work-testing:<version>")
-    testImplementation("androidx.work:work-testing:<version>")
+    androidTestImplementation(libs.work.testing)
+    testImplementation(libs.work.testing)
     testImplementation(kotlin("test"))
-    testImplementation("com.google.truth:truth:1.1.5")
+    testImplementation(libs.truth)
 }

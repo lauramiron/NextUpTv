@@ -1,4 +1,4 @@
-package io.github.lauramiron.nextuptv.ui
+package io.github.lauramiron.nextuptv.ui.playback
 
 import android.R
 import android.os.Bundle

@@ -1,13 +1,17 @@
-package io.github.lauramiron.nextuptv.ui
-
-import java.util.Timer
-import java.util.TimerTask
+package io.github.lauramiron.nextuptv.ui.main
 
 import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.DisplayMetrics
+import android.util.Log
+import android.view.Gravity
+import android.view.ViewGroup
+import android.widget.TextView
+import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.leanback.app.BackgroundManager
 import androidx.leanback.app.BrowseSupportFragment
 import androidx.leanback.widget.ArrayObjectAdapter
@@ -19,21 +23,21 @@ import androidx.leanback.widget.OnItemViewSelectedListener
 import androidx.leanback.widget.Presenter
 import androidx.leanback.widget.Row
 import androidx.leanback.widget.RowPresenter
-import androidx.core.content.ContextCompat
-import android.util.DisplayMetrics
-import android.util.Log
-import android.view.Gravity
-import android.view.ViewGroup
-import android.widget.TextView
-import android.widget.Toast
-
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
 import io.github.lauramiron.nextuptv.AppSource
 import io.github.lauramiron.nextuptv.R
 import io.github.lauramiron.nextuptv.ResumeSource
-import kotlin.collections.forEach
+import io.github.lauramiron.nextuptv.ui.app.AppCardPresenter
+import io.github.lauramiron.nextuptv.ui.app.AppItem
+import io.github.lauramiron.nextuptv.ui.deeplinktest.DeepLinkItem
+import io.github.lauramiron.nextuptv.ui.deeplinktest.DeepLinkTestCardPresenter
+import io.github.lauramiron.nextuptv.ui.deeplinktest.DeeplinkTester
+import io.github.lauramiron.nextuptv.ui.details.MovieItem
+import io.github.lauramiron.nextuptv.ui.resume.ResumeCardPresenter
+import java.util.Timer
+import java.util.TimerTask
 
 /**
  * Loads a grid of cards with movies to browse.
@@ -104,6 +108,19 @@ class MainFragment : BrowseSupportFragment() {
         rowsAdapter.add(ListRow(header, rowAdapter))
     }
 
+    private fun addResumeRow(rowsAdapter: ArrayObjectAdapter) {
+        val resumeEntries = ResumeSource().load(requireContext())
+        val presenter = ResumeCardPresenter()
+
+        if (resumeEntries.isEmpty()) return
+
+        val resumeAdapter = ArrayObjectAdapter(presenter).apply {
+            resumeEntries.forEach { add(it) }
+        }
+        val header = HeaderItem(1L, "Resume Watching")
+        rowsAdapter.add(ListRow(header, resumeAdapter))
+    }
+
     private fun loadRows() {
         val rowsAdapter = ArrayObjectAdapter(ListRowPresenter())
 
@@ -116,16 +133,10 @@ class MainFragment : BrowseSupportFragment() {
         rowsAdapter.add(ListRow(header, appsRowsAdapter))
 
         // Resume Watching Row
-        val resumeEntries = ResumeSource().load(requireContext())
-        if (resumeEntries.isNotEmpty()) {
-            val resumeAdapter = ArrayObjectAdapter(ResumeCardPresenter()).apply {
-                resumeEntries.forEach { add(it) }
-            }
-            rowsAdapter.add(ListRow(HeaderItem(1L, "Resume Watching"), resumeAdapter))
-        }
+        addResumeRow(rowsAdapter)
 
         // Test Deeplinks row
-        addDeepLinkTestRow(rowsAdapter);
+        addDeepLinkTestRow(rowsAdapter)
 
 
 //        val gridHeader = HeaderItem(NUM_ROWS.toLong(), "PREFERENCES")
@@ -160,7 +171,7 @@ class MainFragment : BrowseSupportFragment() {
             when (item) {
 
                 // If your adapter stores a custom AppEntry
-                is AppEntry -> {
+                is AppItem -> {
                     val pm = requireContext().packageManager
                     val launch = pm.getLeanbackLaunchIntentForPackage(item.packageName)
                         ?: pm.getLaunchIntentForPackage(item.packageName)
@@ -182,8 +193,9 @@ class MainFragment : BrowseSupportFragment() {
 
     private inner class ItemViewSelectedListener : OnItemViewSelectedListener {
         override fun onItemSelected(itemViewHolder: Presenter.ViewHolder?, item: Any?,
-                                    rowViewHolder: RowPresenter.ViewHolder, row: Row) {
-            if (item is Movie) {
+                                    rowViewHolder: RowPresenter.ViewHolder, row: Row
+        ) {
+            if (item is MovieItem) {
                 mBackgroundUri = item.backgroundImageUrl
                 startBackgroundTimer()
             }
@@ -220,24 +232,24 @@ class MainFragment : BrowseSupportFragment() {
         }
     }
 
-    private inner class GridItemPresenter : Presenter() {
-        override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
-            val view = TextView(parent.context)
-            view.layoutParams = ViewGroup.LayoutParams(GRID_ITEM_WIDTH, GRID_ITEM_HEIGHT)
-            view.isFocusable = true
-            view.isFocusableInTouchMode = true
-            view.setBackgroundColor(ContextCompat.getColor(activity!!, R.color.default_background))
-            view.setTextColor(Color.WHITE)
-            view.gravity = Gravity.CENTER
-            return ViewHolder(view)
-        }
-
-        override fun onBindViewHolder(viewHolder: ViewHolder, item: Any) {
-            (viewHolder.view as TextView).text = item as String
-        }
-
-        override fun onUnbindViewHolder(viewHolder: ViewHolder) {}
-    }
+//    private inner class GridItemPresenter : Presenter() {
+//        override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
+//            val view = TextView(parent.context)
+//            view.layoutParams = ViewGroup.LayoutParams(GRID_ITEM_WIDTH, GRID_ITEM_HEIGHT)
+//            view.isFocusable = true
+//            view.isFocusableInTouchMode = true
+//            view.setBackgroundColor(ContextCompat.getColor(activity!!, R.color.default_background))
+//            view.setTextColor(Color.WHITE)
+//            view.gravity = Gravity.CENTER
+//            return ViewHolder(view)
+//        }
+//
+//        override fun onBindViewHolder(viewHolder: ViewHolder, item: Any) {
+//            (viewHolder.view as TextView).text = item as String
+//        }
+//
+//        override fun onUnbindViewHolder(viewHolder: ViewHolder) {}
+//    }
 
     companion object {
         private val TAG = "MainFragment"

@@ -1,4 +1,4 @@
-package io.github.lauramiron.nextuptv.ui
+package io.github.lauramiron.nextuptv.ui.deeplinktest
 
 data class DeepLinkItem(
     val title: String,

@@ -49,7 +49,7 @@ object DatabaseProvider {
                 builder.fallbackToDestructiveMigration()
             }
         } else {
-            builder.fallbackToDestructiveMigration()
+            builder.fallbackToDestructiveMigration(false)
         }
 
         return builder.build()

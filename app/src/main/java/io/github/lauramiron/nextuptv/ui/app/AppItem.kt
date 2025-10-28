@@ -1,9 +1,9 @@
-package io.github.lauramiron.nextuptv.ui
+package io.github.lauramiron.nextuptv.ui.app
 
 import android.content.Intent
 import android.graphics.drawable.Drawable
 
-data class AppEntry (
+data class AppItem (
     val label: String,
     val packageName: String,
     val icon: Drawable?,

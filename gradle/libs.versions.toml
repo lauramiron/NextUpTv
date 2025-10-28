@@ -11,8 +11,10 @@ roomCommonJvm = "2.8.2"
 databindingAdapters = "8.13.0"
 roomKtx = "2.8.2"
 databindingCompiler = "8.13.0"
+truth = "1.4.5"
 workRuntimeKtx = "2.10.5"
 junitKtx = "1.3.0"
+workTestingVersion = "2.11.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -28,6 +30,8 @@ androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = 
 androidx-databinding-compiler = { group = "androidx.databinding", name = "databinding-compiler", version.ref = "databindingCompiler" }
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workRuntimeKtx" }
 androidx-junit-ktx = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "junitKtx" }
+truth = { module = "com.google.truth:truth", version.ref = "truth" }
+work-testing = { module = "androidx.work:work-testing", version.ref = "workTestingVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

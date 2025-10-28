@@ -1,14 +1,14 @@
-package io.github.lauramiron.nextuptv.ui
+package io.github.lauramiron.nextuptv.ui.common
 
 import android.graphics.drawable.Drawable
-import androidx.leanback.widget.ImageCardView
-import androidx.leanback.widget.Presenter
-import androidx.core.content.ContextCompat
 import android.util.Log
 import android.view.ViewGroup
-
+import androidx.core.content.ContextCompat
+import androidx.leanback.widget.ImageCardView
+import androidx.leanback.widget.Presenter
 import com.bumptech.glide.Glide
 import io.github.lauramiron.nextuptv.R
+import io.github.lauramiron.nextuptv.ui.details.MovieItem
 import kotlin.properties.Delegates
 
 /**
@@ -41,16 +41,16 @@ class CardPresenter : Presenter() {
     }
 
     override fun onBindViewHolder(viewHolder: ViewHolder, item: Any) {
-        val movie = item as Movie
+        val movieItem = item as MovieItem
         val cardView = viewHolder.view as ImageCardView
 
         Log.d(TAG, "onBindViewHolder")
-        if (movie.cardImageUrl != null) {
-            cardView.titleText = movie.title
-            cardView.contentText = movie.studio
+        if (movieItem.cardImageUrl != null) {
+            cardView.titleText = movieItem.title
+            cardView.contentText = movieItem.studio
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
             Glide.with(viewHolder.view.context)
-                    .load(movie.cardImageUrl)
+                    .load(movieItem.cardImageUrl)
                     .centerCrop()
                     .error(mDefaultCardImage)
                     .into(cardView.mainImageView)

@@ -1,4 +1,4 @@
-package io.github.lauramiron.nextuptv.ui
+package io.github.lauramiron.nextuptv.ui.details
 
 import android.os.Bundle
 import androidx.fragment.app.FragmentActivity

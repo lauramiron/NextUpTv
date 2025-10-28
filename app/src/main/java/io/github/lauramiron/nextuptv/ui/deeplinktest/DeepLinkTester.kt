@@ -1,4 +1,4 @@
-package io.github.lauramiron.nextuptv.ui
+package io.github.lauramiron.nextuptv.ui.deeplinktest
 
 import android.content.ActivityNotFoundException
 import android.content.Context

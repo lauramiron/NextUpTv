@@ -1,4 +1,4 @@
-package io.github.lauramiron.nextuptv.ui
+package io.github.lauramiron.nextuptv.ui.app
 
 import android.R
 import android.view.ViewGroup
@@ -17,7 +17,7 @@ class AppCardPresenter : Presenter() {
     }
 
     override fun onBindViewHolder(viewHolder: ViewHolder, item: Any) {
-        val entry = item as AppEntry
+        val entry = item as AppItem
         val card = viewHolder.view as ImageCardView
         val pm = card.context.packageManager
 

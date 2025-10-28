@@ -4,11 +4,28 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import java.util.Date
 
 // --- enums as @IntDef/@StringDef or sealed classes; using String here for brevity ---
 enum class TitleKind { MOVIE, SERIES }
 enum class ArtworkType { POSTER, BACKDROP, LOGO }
 enum class CreditRole { CAST, DIRECTOR, WRITER }
+enum class StreamingService(val id: String) {
+    NETFLIX("netflix"),
+    PRIME("prime"),
+    DISNEY("disney"),
+    APPLE("apple"),
+    HBO("hbo"),
+    PEACOCK("peacock"),
+    HULU("hulu");
+
+    companion object {
+        fun fromString(id: String): StreamingService? {
+            return entries.find { it.id.equals(id, ignoreCase = true) }
+        }
+    }
+}
+enum class PopularityType { TOP_SHOWS }
 
 // ---- TITLES (movie or series root) ----
 @Entity(
@@ -29,26 +46,6 @@ data class TitleEntity(
     val localUpdatedAt: Long = System.currentTimeMillis()
 )
 
-//// ---- SEASONS (only for SERIES) ----
-//@Entity(
-//    tableName = "seasons",
-//    indices = [Index(value = ["titleId", "seasonNumber"], unique = true)],
-//    foreignKeys = [
-//        ForeignKey(
-//            entity = TitleEntity::class,
-//            parentColumns = ["id"], childColumns = ["titleId"],
-//            onDelete = ForeignKey.CASCADE, onUpdate = ForeignKey.CASCADE
-//        )
-//    ]
-//)
-//data class SeasonEntity(
-//    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-//    val titleId: Long,                 // FK -> titles.id
-//    val seasonNumber: Int,
-//    val name: String?,
-//    val synopsis: String?,
-//    val posterUrl: String?
-//)
 
 // ---- EPISODES ----
 @Entity(
@@ -141,10 +138,28 @@ data class ExternalIdEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
 //    val entityType: String,            // "title" | "episode"
     val entityId: Long,                // FK to titles.id or episodes.id (enforce in code)
-    val provider: String,              // e.g. "mon" | "netflix" | "tmdb" | "imdb"
+    val provider: StreamingService,   // streaming service provider
     val providerId: String,
     val available: Boolean,
     val price: Short
 //    val showLink: String,
 //    val videoLink: String
+)
+
+@Entity(
+    tableName = "title_popularities",
+    foreignKeys = [
+        ForeignKey(
+            entity = TitleEntity::class,
+            parentColumns = ["id"], childColumns = ["titleId"],
+            onDelete = ForeignKey.CASCADE, onUpdate = ForeignKey.CASCADE
+        ),
+    ]
+)
+data class PopularityEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val service: StreamingService,   // streaming service provider
+    val popularityType: PopularityType,
+    val titleId: Long,                // FK to titles.id or episodes.id (enforce in code)
+    val updatedAt: Date
 )

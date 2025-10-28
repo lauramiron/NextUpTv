@@ -1,8 +1,7 @@
-package io.github.lauramiron.nextuptv.ui
+package io.github.lauramiron.nextuptv.ui.error
 
 import android.os.Bundle
 import android.view.View
-
 import androidx.core.content.ContextCompat
 import androidx.leanback.app.ErrorSupportFragment
 import io.github.lauramiron.nextuptv.R

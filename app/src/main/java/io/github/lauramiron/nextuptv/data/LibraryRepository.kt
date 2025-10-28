@@ -103,7 +103,7 @@ class LibraryRepository(
 
         // 2) External IDs
         val streamingOptions: List<StreamingOptionDto> = dto.extractUsStreamingOptions()
-        val externalIdEntities = streamingOptions.map { it.toExternalIdEntity(titleId) }
+        val externalIdEntities = streamingOptions.mapNotNull { it.toExternalIdEntity(titleId) }
         report.externalIdsUpserted = db.externalIdDao().upsertAll(externalIdEntities)
 
         // 3) Genres (name->entity), then cross-ref

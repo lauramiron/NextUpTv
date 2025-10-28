@@ -1,8 +1,9 @@
-package io.github.lauramiron.nextuptv.ui
+package io.github.lauramiron.nextuptv.ui.main
 
 import android.os.Bundle
 import androidx.fragment.app.FragmentActivity
 import io.github.lauramiron.nextuptv.R
+import io.github.lauramiron.nextuptv.ui.main.MainFragment
 
 /**
  * Loads [MainFragment].

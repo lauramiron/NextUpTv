@@ -19,7 +19,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.NextUpTv" >
         <activity
-            android:name="io.github.lauramiron.nextuptv.ui.MainActivity"
+            android:name="io.github.lauramiron.nextuptv.ui.main.MainActivity"
             android:banner="@drawable/app_icon_your_company"
             android:exported="true"
             android:launchMode="singleTask"
@@ -36,13 +36,13 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="io.github.lauramiron.nextuptv.ui.DetailsActivity"
+            android:name="io.github.lauramiron.nextuptv.ui.details.DetailsActivity"
             android:exported="false" />
         <activity
-            android:name="io.github.lauramiron.nextuptv.ui.PlaybackActivity"
+            android:name="io.github.lauramiron.nextuptv.ui.playback.PlaybackActivity"
             android:exported="false" />
         <activity
-            android:name="io.github.lauramiron.nextuptv.ui.BrowseErrorActivity"
+            android:name="io.github.lauramiron.nextuptv.ui.error.BrowseErrorActivity"
             android:exported="false" />
     </application>
 

@@ -2,19 +2,20 @@ package io.github.lauramiron.nextuptv
 
 import android.content.Context
 import androidx.appcompat.content.res.AppCompatResources
+import io.github.lauramiron.nextuptv.ui.app.AppItem
 
 class AppSource {
-    fun loadApps(context: Context): List<AppEntry> {
+    fun loadApps(context: Context): List<AppItem> {
         fun d(resId: Int) = AppCompatResources.getDrawable(context, resId)
 
         return listOf(
-            AppEntry("YouTube",    "com.google.android.youtube.tv",     d(R.drawable.ic_youtube_tv),   launchIntent = null),
-            AppEntry("Netflix",    "com.netflix.ninja",                 d(R.drawable.ic_netflix),       launchIntent = null),
-            AppEntry("Prime Video","com.amazon.avod.thirdpartyclient", d(R.drawable.ic_prime_video),   launchIntent = null),
-            AppEntry("Disney+",    "com.disney.disneyplus",             d(R.drawable.ic_disney_plus),   launchIntent = null),
-            AppEntry("Hulu",       "com.hulu.plus",                     d(R.drawable.ic_hulu),          launchIntent = null),
-            AppEntry("Max",        "com.hbo.hbomax",                    d(R.drawable.ic_max),           launchIntent = null),
-            AppEntry("Settings",   "com.android.tv.settings",           d(android.R.drawable.ic_menu_manage),      launchIntent = null),
+            AppItem("YouTube",    "com.google.android.youtube.tv",     d(R.drawable.ic_youtube_tv),   launchIntent = null),
+            AppItem("Netflix",    "com.netflix.ninja",                 d(R.drawable.ic_netflix),       launchIntent = null),
+            AppItem("Prime Video","com.amazon.avod.thirdpartyclient", d(R.drawable.ic_prime_video),   launchIntent = null),
+            AppItem("Disney+",    "com.disney.disneyplus",             d(R.drawable.ic_disney_plus),   launchIntent = null),
+            AppItem("Hulu",       "com.hulu.plus",                     d(R.drawable.ic_hulu),          launchIntent = null),
+            AppItem("Max",        "com.hbo.hbomax",                    d(R.drawable.ic_max),           launchIntent = null),
+            AppItem("Settings",   "com.android.tv.settings",           d(android.R.drawable.ic_menu_manage),      launchIntent = null),
         )
 
 

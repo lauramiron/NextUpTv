@@ -2,14 +2,15 @@ package io.github.lauramiron.nextuptv
 
 import android.content.Context
 import androidx.appcompat.content.res.AppCompatResources
+import io.github.lauramiron.nextuptv.ui.resume.ResumeItem
 
 class ResumeSource {
-    fun load(context: Context): List<ResumeEntry> {
+    fun load(context: Context): List<ResumeItem> {
         // Debug-only icons/posters (put simple placeholders in src/debug/res/drawable/)
         fun d(resId: Int) = AppCompatResources.getDrawable(context, resId)
 
         return listOf(
-            ResumeEntry(
+            ResumeItem(
                 title = "Stranger Things",
                 subtitle = "S2 • E3 • The Pollywog",
                 progressPercent = 62,
@@ -18,7 +19,7 @@ class ResumeSource {
                 appBadge = d(R.drawable.ic_netflix),            // app badge
                 deepLink = null
             ),
-            ResumeEntry(
+            ResumeItem(
                 title = "The Mandalorian",
                 subtitle = "S1 • E5 • The Gunslinger",
                 progressPercent = 41,
@@ -27,7 +28,7 @@ class ResumeSource {
                 appBadge = d(R.drawable.ic_disney_plus),
                 deepLink = null
             ),
-            ResumeEntry(
+            ResumeItem(
                 title = "Loki",
                 subtitle = "S2 • E1 • Ouroboros",
                 progressPercent = 78,
@@ -36,7 +37,7 @@ class ResumeSource {
                 appBadge = d(R.drawable.ic_disney_plus),
                 deepLink = null
             ),
-            ResumeEntry(
+            ResumeItem(
                 title = "The Boys",
                 subtitle = "S3 • E4 • Glorious Five Year Plan",
                 progressPercent = 23,

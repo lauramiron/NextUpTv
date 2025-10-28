@@ -17,7 +17,7 @@ data class ResumeEntryEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
 
     // Provider info
-    val serviceId: String,               // "netflix", "prime", "disney", ...
+    val serviceId: StreamingService,    // streaming service provider
     val serviceItemId: String?,          // e.g., Netflix numeric id if you can scrape it (optional)
 
     // Scraped human-readable fields

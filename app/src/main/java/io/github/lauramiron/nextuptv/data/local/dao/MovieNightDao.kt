@@ -8,9 +8,13 @@ import androidx.room.Update
 import io.github.lauramiron.nextuptv.data.local.entity.ExternalIdEntity
 import io.github.lauramiron.nextuptv.data.local.entity.GenreEntity
 import io.github.lauramiron.nextuptv.data.local.entity.PersonEntity
+import io.github.lauramiron.nextuptv.data.local.entity.PopularityEntity
+import io.github.lauramiron.nextuptv.data.local.entity.PopularityType
+import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
 import io.github.lauramiron.nextuptv.data.local.entity.TitleEntity
 import io.github.lauramiron.nextuptv.data.local.entity.TitleGenreCrossRef
 import io.github.lauramiron.nextuptv.data.local.entity.TitlePersonCrossRef
+import java.util.Date
 
 @Dao
 interface TitleDao {
@@ -47,44 +51,6 @@ interface TitleDao {
 //    fun getTitleByExternal(provider: String, providerId: String): TitleEntity?
 }
 
-//@Dao
-//interface EpisodeDao {
-//    @Insert(onConflict = OnConflictStrategy.IGNORE)
-//    suspend fun insertIgnoreAll(items: List<EpisodeEntity>): List<Long>
-//
-//    @Update
-//    suspend fun updateAll(items: List<EpisodeEntity>)
-//
-//    @Query("""
-//        SELECT id FROM episodes
-//        WHERE titleId = :titleId AND
-//              ((:season IS NULL AND seasonNumber IS NULL) OR seasonNumber = :season) AND
-//              ((:ep IS NULL AND episodeNumber IS NULL) OR episodeNumber = :ep)
-//        LIMIT 1
-//    """)
-//    suspend fun findIdByNaturalKey(
-//        titleId: Long,
-//        season: Int?,
-//        ep: Int?
-//    ): Long?
-//
-//    @Transaction
-//    suspend fun upsertAll(items: List<EpisodeEntity>): Int {
-//        if (items.isEmpty()) return 0
-//        val results = insertIgnoreAll(items)
-//        val toUpdate = mutableListOf<EpisodeEntity>()
-//        results.forEachIndexed { i, rowId ->
-//            if (rowId == -1L) {
-//                val e = items[i]
-//                val id = findIdByNaturalKey(e.titleId, e.seasonNumber, e.episodeNumber)
-//                if (id != null) toUpdate += e.copy(id = id)
-//            }
-//        }
-//        if (toUpdate.isNotEmpty()) updateAll(toUpdate)
-//        return items.size
-//    }
-//}
-
 @Dao
 interface ExternalIdDao {
     // 1) Fast-path insert that won’t replace existing rows
@@ -101,7 +67,7 @@ interface ExternalIdDao {
         WHERE entityId = :entityId AND provider = :provider
         LIMIT 1
     """)
-    suspend fun findId(entityId: Long, provider: String): Long?
+    suspend fun findId(entityId: Long, provider: StreamingService): Long?
 
     /**
      * Upsert all:
@@ -213,4 +179,104 @@ interface TitleGenreCrossRefDao {
 interface TitlePersonCrossRefDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun upsertAll(items: List<TitlePersonCrossRef>): List<Long>
+}
+
+@Dao
+interface PopularityDao {
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertIgnoreAll(items: List<PopularityEntity>): List<Long>
+
+    @Update
+    suspend fun updateAll(items: List<PopularityEntity>)
+
+    @Query("""
+        DELETE FROM title_popularities
+        WHERE service = :service
+        AND popularityType = :popularityType
+        AND titleId NOT IN (:titleIds)
+    """)
+    suspend fun deleteStaleEntries(
+        service: StreamingService,
+        popularityType: PopularityType,
+        titleIds: List<Long>
+    )
+
+    @Query("""
+        DELETE FROM title_popularities
+        WHERE service = :service
+        AND popularityType = :popularityType
+    """)
+    suspend fun deleteAllForServiceAndType(
+        service: StreamingService,
+        popularityType: PopularityType
+    )
+
+    @Query("""
+        SELECT * FROM title_popularities
+        WHERE service = :service
+        AND popularityType = :popularityType
+        AND titleId = :titleId
+        LIMIT 1
+    """)
+    suspend fun findExisting(
+        service: StreamingService,
+        popularityType: PopularityType,
+        titleId: Long
+    ): PopularityEntity?
+
+    /**
+     * Updates the top shows list for a specific streaming service.
+     *
+     * This function:
+     * - Deletes rows where popularityType=TOP_SHOWS and service matches, but titleId is not in the provided list
+     * - Inserts new entries for titleIds that don't exist
+     * - Updates the updatedAt timestamp for entries that already exist
+     *
+     * @param service The streaming service to update
+     * @param titleIds List of title IDs that should be in the top shows
+     */
+    @Transaction
+    suspend fun updateTopShows(service: StreamingService, titleIds: List<Long>) {
+        val popularityType = PopularityType.TOP_SHOWS
+        val currentTime = Date()
+
+        // Delete entries that are no longer in the top shows
+        if (titleIds.isNotEmpty()) {
+            deleteStaleEntries(service, popularityType, titleIds)
+        } else {
+            // If empty list, delete all for this service and type
+            deleteAllForServiceAndType(service, popularityType)
+            return // Nothing to insert
+        }
+
+        // Create entities for all titleIds
+        val entities = titleIds.map { titleId ->
+            PopularityEntity(
+                id = 0,
+                service = service,
+                popularityType = popularityType,
+                titleId = titleId,
+                updatedAt = currentTime
+            )
+        }
+
+        // Try to insert all
+        val results = insertIgnoreAll(entities)
+
+        // For rows that already existed (insert returned -1), update them
+        val toUpdate = mutableListOf<PopularityEntity>()
+        results.forEachIndexed { i, rowId ->
+            if (rowId == -1L) {
+                // Row already exists, need to update it
+                val existing = findExisting(service, popularityType, titleIds[i])
+                if (existing != null) {
+                    toUpdate += existing.copy(updatedAt = currentTime)
+                }
+            }
+        }
+
+        if (toUpdate.isNotEmpty()) {
+            updateAll(toUpdate)
+        }
+    }
 }
