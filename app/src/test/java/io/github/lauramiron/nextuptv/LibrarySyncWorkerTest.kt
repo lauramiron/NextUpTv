@@ -15,6 +15,7 @@ import androidx.work.workDataOf
 import com.google.common.util.concurrent.ListenableFuture
 import io.github.lauramiron.nextuptv.data.LibraryRepository
 import io.github.lauramiron.nextuptv.data.local.AppDb
+import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
 import io.github.lauramiron.nextuptv.data.remote.movienight.MovieNightApiFactory
 import io.github.lauramiron.nextuptv.sync.LibrarySyncWorker
 import io.github.lauramiron.nextuptva.TestWorkerFactory
@@ -169,7 +170,9 @@ class LibrarySyncWorkerTest {
 
                 // Verify external IDs were stored
                 if (report.externalIdsUpserted > 0) {
-                    val externalIds = db.externalIdDao().findId(titleInDb, "netflix")
+                    val externalIds = db.externalIdDao().findId(titleInDb,
+                        StreamingService.NETFLIX
+                    )
                     if (externalIds != null) {
                         println("✅ Netflix external ID found for title")
                     }

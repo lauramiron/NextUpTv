@@ -4,6 +4,8 @@ import androidx.room.withTransaction
 import io.github.lauramiron.nextuptv.data.local.AppDb
 import io.github.lauramiron.nextuptv.data.local.entity.CreditRole
 import io.github.lauramiron.nextuptv.data.local.entity.PersonEntity
+import io.github.lauramiron.nextuptv.data.local.entity.PopularityEntity
+import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
 import io.github.lauramiron.nextuptv.data.local.entity.TitleEntity
 import io.github.lauramiron.nextuptv.data.local.entity.TitleGenreCrossRef
 import io.github.lauramiron.nextuptv.data.local.entity.TitlePersonCrossRef
@@ -29,6 +31,7 @@ class LibraryRepository(
     data class SyncReport(
         var pages: Int = 0,
         var titlesUpserted: Int = 0,
+        var titleIdsUpserted: List<Long> = emptyList<Long>(),
         var episodesUpserted: Int = 0,
         var externalIdsUpserted: Int = 0,
         var genresUpserted: Int = 0,
@@ -40,6 +43,7 @@ class LibraryRepository(
         operator fun plusAssign(other: SyncReport) {
             this.pages += other.pages
             this.titlesUpserted += other.titlesUpserted
+            this.titleIdsUpserted += other.titleIdsUpserted
             this.episodesUpserted += other.episodesUpserted
             this.externalIdsUpserted += other.externalIdsUpserted
             this.genresUpserted += other.genresUpserted
@@ -100,6 +104,7 @@ class LibraryRepository(
         val titleEntity: TitleEntity = dto.toEntity() // your mapper sets: name, kind, year, imageSetJson, etc.
         val titleId: Long = db.titleDao().upsert(titleEntity)
         report.titlesUpserted = 1
+        report.titleIdsUpserted = longArrayOf(titleId).toList()
 
         // 2) External IDs
         val streamingOptions: List<StreamingOptionDto> = dto.extractUsStreamingOptions()
@@ -165,6 +170,28 @@ class LibraryRepository(
         } catch (e: Exception) {
             // Log error but don't throw - return empty report
             println("Error syncing title $monId: ${e.message}")
+            SyncReport()
+        }
+    }
+
+    suspend fun syncTopShows(provider: StreamingService) {
+        try {
+            val topShows = api.getTopShows(provider)
+
+            db.withTransaction {
+                // Upsert each title and collect their IDs
+                val titleIds = topShows.map { titleDto ->
+                    val report = upsertOneTitleTree(titleDto)
+                    report.titleIdsUpserted.first()
+                }
+
+                // Update the top shows list for this provider
+                db.popularityDao().updateTopShows(service = provider, titleIds = titleIds)
+            }
+
+        } catch (e: Exception) {
+            // Log error but don't throw - return empty report
+            println("Error syncing $provider top shows: ${e.message}")
             SyncReport()
         }
     }

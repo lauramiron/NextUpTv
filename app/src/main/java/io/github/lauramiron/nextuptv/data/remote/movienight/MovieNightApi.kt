@@ -1,10 +1,10 @@
 package io.github.lauramiron.nextuptv.data.remote.movienight
 
+import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import retrofit2.HttpException
-import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Path
@@ -24,6 +24,13 @@ interface MovieNightApiService {
         @Header("X-RapidAPI-Key") apiKey: String,
         @Path("id") monId: String
     ): TitleDto
+
+    @GET("shows/top")
+    suspend fun getTopShows(
+        @Header("X-RapidAPI-Key") apiKey: String,
+        @Query("country") country: String = "us",
+        @Query("service") service: String
+    ): List<TitleDto>
 }
 
 /**
@@ -33,6 +40,53 @@ class MovieNightApi(
     private val service: MovieNightApiService,
     private val apiKey: String
 ) {
+    // --- simple retry helper (exponential backoff on 429/5xx) ---
+    private suspend inline fun <T> retrying(
+        times: Int = 3,
+        initialDelayMs: Long = 500,
+        maxDelayMs: Long = 4_000,
+        factor: Double = 2.0,
+        crossinline block: suspend () -> T
+    ): T {
+        var currentDelay = initialDelayMs
+        repeat(times) {
+            try {
+                return block()
+            } catch (e: HttpException) {
+                if (e.code() != 429 && e.code() !in 500..599) throw e
+            } catch (e: java.io.IOException) {
+                // network glitch — retry
+            }
+            delay(currentDelay)
+            currentDelay = (currentDelay * factor).toLong().coerceAtMost(maxDelayMs)
+        }
+        return block() // final attempt (let exceptions bubble)
+    }
+
+    /**
+     * Fetch a single title by its MovieOfTheNight ID.
+     */
+    suspend fun getTitle(monId: String): TitleDto {
+        return retrying {
+            service.getTitle(
+                apiKey = apiKey,
+                monId = monId
+            )
+        }
+    }
+
+    /**
+     * Get the official top shows in a service
+     */
+    suspend fun getTopShows(provider: StreamingService): List<TitleDto> {
+        return retrying {
+            service.getTopShows(
+                apiKey=apiKey,
+                service=provider.id
+            )
+        }
+    }
+
     /**
      * Fetch *pages* of shows until `hasMore` is false.
      *
@@ -93,40 +147,5 @@ class MovieNightApi(
             pages += 1
             cursor = resp.nextCursor
         } while (resp.hasMore && (maxPages == null || pages < maxPages))
-    }
-
-    /**
-     * Fetch a single title by its MovieOfTheNight ID.
-     */
-    suspend fun getTitle(monId: String): TitleDto {
-        return retrying {
-            service.getTitle(
-                apiKey = apiKey,
-                monId = monId
-            )
-        }
-    }
-
-    // --- simple retry helper (exponential backoff on 429/5xx) ---
-    private suspend inline fun <T> retrying(
-        times: Int = 3,
-        initialDelayMs: Long = 500,
-        maxDelayMs: Long = 4_000,
-        factor: Double = 2.0,
-        crossinline block: suspend () -> T
-    ): T {
-        var currentDelay = initialDelayMs
-        repeat(times) {
-            try {
-                return block()
-            } catch (e: HttpException) {
-                if (e.code() != 429 && e.code() !in 500..599) throw e
-            } catch (e: java.io.IOException) {
-                // network glitch — retry
-            }
-            delay(currentDelay)
-            currentDelay = (currentDelay * factor).toLong().coerceAtMost(maxDelayMs)
-        }
-        return block() // final attempt (let exceptions bubble)
     }
 }
