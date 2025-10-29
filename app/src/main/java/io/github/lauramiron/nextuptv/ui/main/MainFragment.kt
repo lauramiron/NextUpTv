@@ -33,6 +33,7 @@ import io.github.lauramiron.nextuptv.data.mappers.toMovieItem
 import io.github.lauramiron.nextuptv.ui.app.AppCardPresenter
 import io.github.lauramiron.nextuptv.ui.app.AppItem
 import io.github.lauramiron.nextuptv.ui.common.CardPresenter
+import io.github.lauramiron.nextuptv.ui.common.StreamingLauncher
 import io.github.lauramiron.nextuptv.ui.deeplinktest.DeepLinkItem
 import io.github.lauramiron.nextuptv.ui.deeplinktest.DeepLinkTestCardPresenter
 import io.github.lauramiron.nextuptv.ui.deeplinktest.DeeplinkTester
@@ -215,6 +216,17 @@ class MainFragment : BrowseSupportFragment() {
             row: Row
         ) {
             when (item) {
+
+                // Launch streaming content
+                is MovieItem -> {
+                    val videoUrl = item.videoUrl
+                    if (videoUrl != null) {
+                        StreamingLauncher.launch(requireContext(), videoUrl)
+                    } else {
+                        Toast.makeText(requireContext(),
+                            "No video URL available for ${item.title}", Toast.LENGTH_SHORT).show()
+                    }
+                }
 
                 // If your adapter stores a custom AppEntry
                 is AppItem -> {

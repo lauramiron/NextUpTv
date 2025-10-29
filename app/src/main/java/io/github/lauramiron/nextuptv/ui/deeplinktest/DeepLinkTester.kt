@@ -28,22 +28,22 @@ object DeeplinkTester {
         }
 
         val pm: PackageManager = context.packageManager
-        val chosen = candidates.firstOrNull { it.resolveActivity(pm) != null }
+//        val chosen = candidates.firstOrNull { it.resolveActivity(pm) != null }
+//
+//        if (chosen == null) {
+//            Toast.makeText(context, "No handler for Netflix deeplink", Toast.LENGTH_SHORT).show()
+//            Log.w(TAG, "No candidate resolved for ID=$netflixId")
+//            return
+//        }
 
-        if (chosen == null) {
-            Toast.makeText(context, "No handler for Netflix deeplink", Toast.LENGTH_SHORT).show()
-            Log.w(TAG, "No candidate resolved for ID=$netflixId")
-            return
-        }
-
-        try {
-            context.startActivity(chosen)
-            val desc = chosen.dataString ?: chosen.toString()
-            Toast.makeText(context, "Launching: $desc", Toast.LENGTH_SHORT).show()
-            Log.i(TAG, "Launched: $desc")
-        } catch (e: ActivityNotFoundException) {
-            Toast.makeText(context, "Launch failed: ${e.message}", Toast.LENGTH_SHORT).show()
-            Log.e(TAG, "Launch failed for ${chosen.dataString}", e)
-        }
+//        try {
+//            context.startActivity(chosen)
+//            val desc = chosen.dataString ?: chosen.toString()
+//            Toast.makeText(context, "Launching: $desc", Toast.LENGTH_SHORT).show()
+//            Log.i(TAG, "Launched: $desc")
+//        } catch (e: ActivityNotFoundException) {
+//            Toast.makeText(context, "Launch failed: ${e.message}", Toast.LENGTH_SHORT).show()
+//            Log.e(TAG, "Launch failed for ${chosen.dataString}", e)
+//        }
     }
 }
