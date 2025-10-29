@@ -14,6 +14,7 @@ import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
 import io.github.lauramiron.nextuptv.data.local.entity.TitleEntity
 import io.github.lauramiron.nextuptv.data.local.entity.TitleGenreCrossRef
 import io.github.lauramiron.nextuptv.data.local.entity.TitlePersonCrossRef
+import io.github.lauramiron.nextuptv.data.local.entity.TitleWithExternalId
 import java.util.Date
 
 @Dao
@@ -223,6 +224,30 @@ interface PopularityDao {
         popularityType: PopularityType,
         titleId: Long
     ): PopularityEntity?
+
+    @Query("""
+        SELECT t.* FROM titles t
+        INNER JOIN title_popularities p ON t.id = p.titleId
+        WHERE p.service = :service
+        AND p.popularityType = 'TOP_SHOWS'
+        ORDER BY p.id ASC
+    """)
+    suspend fun getTopShowsForService(service: StreamingService): List<TitleEntity>
+
+    /**
+     * Get top shows for a service along with their external IDs for that service.
+     * Returns a map of titleId to externalId (providerId from external_ids table).
+     */
+    @Query("""
+        SELECT t.*, e.providerId as externalId
+        FROM titles t
+        INNER JOIN title_popularities p ON t.id = p.titleId
+        LEFT JOIN external_ids e ON t.id = e.entityId AND e.provider = :service
+        WHERE p.service = :service
+        AND p.popularityType = 'TOP_SHOWS'
+        ORDER BY p.id ASC
+    """)
+    suspend fun getTopShowsWithExternalIds(service: StreamingService): List<TitleWithExternalId>
 
     /**
      * Updates the top shows list for a specific streaming service.

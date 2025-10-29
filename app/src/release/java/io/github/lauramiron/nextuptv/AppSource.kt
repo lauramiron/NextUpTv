@@ -4,10 +4,10 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ResolveInfo
-import io.github.lauramiron.nextuptv.ui.AppEntry
+import io.github.lauramiron.nextuptv.ui.app.AppItem
 
 class AppSource {
-    fun loadApps(context: Context): List<AppEntry> {
+    fun loadApps(context: Context): List<AppItem> {
         val pm = context.packageManager;
         val myPkg = context.packageName;
 
@@ -33,7 +33,7 @@ class AppSource {
             val launch = leanback.takeIf { it.resolveActivity(pm) != null }
                 ?: pm.getLaunchIntentForPackage(pkg);
 
-            AppEntry(label, pkg, icon, launch);
+            AppItem(label, pkg, icon, launch);
         }.sortedBy { it.label.lowercase() }
     }
 }

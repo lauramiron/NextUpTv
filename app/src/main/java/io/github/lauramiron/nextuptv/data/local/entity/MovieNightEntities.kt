@@ -1,5 +1,6 @@
 package io.github.lauramiron.nextuptv.data.local.entity
 
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -19,6 +20,47 @@ enum class StreamingService(val id: String) {
     PEACOCK("peacock"),
     HULU("hulu");
 
+    /**
+     * Build the launch URL for this streaming service.
+     *
+     * @param externalId The provider-specific ID from ExternalIdEntity.providerId
+     * @return The deep link URL for launching the title in the streaming service app.
+     *         For Netflix, includes {userId} placeholder to be substituted by calling code.
+     */
+    fun buildLaunchUrl(externalId: String): String {
+        return when (this) {
+            NETFLIX -> {
+                // {userId} is a placeholder for user-specific Netflix ID, to be substituted by calling code
+                "https://www.netflix.com/watch/{userId}?trackId=$externalId"
+            }
+            PRIME -> {
+                // TODO: Verify Prime Video URL format and test deep linking
+                "https://www.primevideo.com/detail/$externalId"
+            }
+            DISNEY -> {
+                // TODO: Verify Disney+ URL format and test deep linking
+                "https://www.disneyplus.com/video/$externalId"
+            }
+            APPLE -> {
+                // TODO: Verify Apple TV+ URL format and test deep linking
+                // May need to differentiate between movies and series
+                "https://tv.apple.com/us/movie/$externalId"
+            }
+            HBO -> {
+                // TODO: Verify HBO Max URL format and test deep linking
+                "https://play.hbomax.com/page/$externalId"
+            }
+            PEACOCK -> {
+                // TODO: Verify Peacock URL format and test deep linking
+                "https://www.peacocktv.com/watch/playback/$externalId"
+            }
+            HULU -> {
+                // TODO: Verify Hulu URL format and test deep linking
+                "https://www.hulu.com/watch/$externalId"
+            }
+        }
+    }
+
     companion object {
         fun fromString(id: String): StreamingService? {
             return entries.find { it.id.equals(id, ignoreCase = true) }
@@ -30,7 +72,7 @@ enum class PopularityType { TOP_SHOWS }
 // ---- TITLES (movie or series root) ----
 @Entity(
     tableName = "titles",
-    indices = [Index("name"), Index(value = ["monId"], unique = true)]
+    indices = [Index("name"), Index(value = ["monId"], unique = true), Index("id")]
 )
 data class TitleEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -148,6 +190,7 @@ data class ExternalIdEntity(
 
 @Entity(
     tableName = "title_popularities",
+    indices =[Index("titleId")],
     foreignKeys = [
         ForeignKey(
             entity = TitleEntity::class,
@@ -162,4 +205,13 @@ data class PopularityEntity(
     val popularityType: PopularityType,
     val titleId: Long,                // FK to titles.id or episodes.id (enforce in code)
     val updatedAt: Date
+)
+
+/**
+ * Result class for queries that join titles with external IDs.
+ * Used to construct launch URLs for streaming services.
+ */
+data class TitleWithExternalId(
+    @Embedded val title: TitleEntity,
+    val externalId: String?  // providerId from external_ids table, null if no external ID exists
 )

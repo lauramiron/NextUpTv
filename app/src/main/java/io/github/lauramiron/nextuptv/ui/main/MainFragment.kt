@@ -1,15 +1,11 @@
 package io.github.lauramiron.nextuptv.ui.main
 
-import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.DisplayMetrics
 import android.util.Log
-import android.view.Gravity
-import android.view.ViewGroup
-import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.leanback.app.BackgroundManager
@@ -23,19 +19,26 @@ import androidx.leanback.widget.OnItemViewSelectedListener
 import androidx.leanback.widget.Presenter
 import androidx.leanback.widget.Row
 import androidx.leanback.widget.RowPresenter
+import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
 import io.github.lauramiron.nextuptv.AppSource
+import io.github.lauramiron.nextuptv.NextUpTvApplication
 import io.github.lauramiron.nextuptv.R
 import io.github.lauramiron.nextuptv.ResumeSource
+import io.github.lauramiron.nextuptv.data.LibraryRepository
+import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
+import io.github.lauramiron.nextuptv.data.mappers.toMovieItem
 import io.github.lauramiron.nextuptv.ui.app.AppCardPresenter
 import io.github.lauramiron.nextuptv.ui.app.AppItem
+import io.github.lauramiron.nextuptv.ui.common.CardPresenter
 import io.github.lauramiron.nextuptv.ui.deeplinktest.DeepLinkItem
 import io.github.lauramiron.nextuptv.ui.deeplinktest.DeepLinkTestCardPresenter
 import io.github.lauramiron.nextuptv.ui.deeplinktest.DeeplinkTester
 import io.github.lauramiron.nextuptv.ui.details.MovieItem
 import io.github.lauramiron.nextuptv.ui.resume.ResumeCardPresenter
+import kotlinx.coroutines.launch
 import java.util.Timer
 import java.util.TimerTask
 
@@ -50,10 +53,14 @@ class MainFragment : BrowseSupportFragment() {
     private lateinit var mMetrics: DisplayMetrics
     private var mBackgroundTimer: Timer? = null
     private var mBackgroundUri: String? = null
+    private lateinit var repository: LibraryRepository
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         Log.i(TAG, "onCreate")
         super.onActivityCreated(savedInstanceState)
+
+        // Initialize repository
+        repository = NextUpTvApplication.getRepository(requireContext())
 
         prepareBackgroundManager()
 
@@ -133,7 +140,10 @@ class MainFragment : BrowseSupportFragment() {
         rowsAdapter.add(ListRow(header, appsRowsAdapter))
 
         // Resume Watching Row
-        addResumeRow(rowsAdapter)
+//        addResumeRow(rowsAdapter)
+
+        // Top Shows rows for each streaming service
+        addTopShowsRows(rowsAdapter)
 
         // Test Deeplinks row
         addDeepLinkTestRow(rowsAdapter)
@@ -149,6 +159,42 @@ class MainFragment : BrowseSupportFragment() {
 //        rowsAdapter.add(ListRow(gridHeader, gridRowAdapter))
 
         adapter = rowsAdapter
+    }
+
+    private fun addTopShowsRows(rowsAdapter: ArrayObjectAdapter) {
+        // List of streaming services to display
+        val services = listOf(
+            StreamingService.NETFLIX to "Top on Netflix",
+            StreamingService.PRIME to "Top on Prime Video",
+            StreamingService.DISNEY to "Top on Disney+",
+            StreamingService.APPLE to "Top on Apple TV+",
+            StreamingService.HBO to "Top on HBO Max"
+        )
+
+        services.forEachIndexed { index, (service, title) ->
+            val headerId = 100L + index
+            val header = HeaderItem(headerId, title)
+            val cardPresenter = CardPresenter()
+            val listRowAdapter = ArrayObjectAdapter(cardPresenter)
+
+            // Add empty row first, will be populated asynchronously
+            rowsAdapter.add(ListRow(header, listRowAdapter))
+
+            // Load top shows asynchronously
+            lifecycleScope.launch {
+                try {
+                    val titlesWithExternalIds = repository.topTitlesWithExternalIds(service)
+                    val movieItems = titlesWithExternalIds.map { it.toMovieItem(service) }
+
+                    // Update adapter on main thread
+                    mHandler.post {
+                        movieItems.forEach { listRowAdapter.add(it) }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error loading top shows for $service", e)
+                }
+            }
+        }
     }
 
     private fun setupEventListeners() {

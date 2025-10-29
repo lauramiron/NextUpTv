@@ -70,53 +70,84 @@ object DatabaseProvider {
      * 2. Snapshot directory (persistent storage)
      */
     private fun findSnapshotFile(context: Context): File? {
+        android.util.Log.d("DatabaseProvider", "findSnapshotFile() - searching for snapshot...")
+
         // First check if snapshot exists in assets (bundled with app)
+        android.util.Log.d("DatabaseProvider", "Checking assets for: $SNAPSHOT_FILENAME")
         try {
             context.assets.open(SNAPSHOT_FILENAME).use { inputStream ->
                 // Found in assets, copy to files directory for Room to use
                 val tempFile = File(context.filesDir, SNAPSHOT_FILENAME)
+                android.util.Log.i("DatabaseProvider", "Found snapshot in assets, copying to: ${tempFile.absolutePath}")
                 FileOutputStream(tempFile).use { outputStream ->
-                    inputStream.copyTo(outputStream)
+                    val bytesCopied = inputStream.copyTo(outputStream)
+                    android.util.Log.i("DatabaseProvider", "Copied $bytesCopied bytes from assets")
                 }
-                android.util.Log.d("DatabaseProvider", "Copied snapshot from assets to: ${tempFile.absolutePath}")
                 return tempFile
             }
         } catch (e: Exception) {
-            // Not in assets, continue to check other locations
+            android.util.Log.d("DatabaseProvider", "Not found in assets: ${e.message}")
         }
 
         // Check snapshot directory
         val snapshotDir = getSnapshotDirectory(context)
         val snapshotFile = File(snapshotDir, SNAPSHOT_FILENAME)
-        return if (snapshotFile.exists()) snapshotFile else null
+        android.util.Log.d("DatabaseProvider", "Checking snapshot directory: ${snapshotFile.absolutePath}")
+
+        return if (snapshotFile.exists()) {
+            android.util.Log.i("DatabaseProvider", "Found snapshot in directory: ${snapshotFile.absolutePath} (${snapshotFile.length()} bytes)")
+            snapshotFile
+        } else {
+            android.util.Log.w("DatabaseProvider", "Snapshot file not found anywhere")
+            null
+        }
     }
 
     private fun createDatabase(context: Context): AppDb {
+        android.util.Log.d("DatabaseProvider", "createDatabase() called")
+        android.util.Log.d("DatabaseProvider", "Context: ${context.javaClass.simpleName}")
+
         val builder = Room.databaseBuilder(
             context,
             AppDb::class.java,
             DB_NAME
         )
 
-        // In debug builds, try to load from snapshot
-        if (BuildConfig.DEBUG) {
-            val snapshotFile = findSnapshotFile(context)
+        // Try to load from snapshot
+        android.util.Log.d("DatabaseProvider", "DEBUG build - checking for snapshot")
+        val snapshotFile = findSnapshotFile(context)
 
-            if (snapshotFile != null && snapshotFile.exists()) {
-                android.util.Log.d("DatabaseProvider", "Loading database from snapshot: ${snapshotFile.absolutePath}")
+        if (snapshotFile != null && snapshotFile.exists()) {
+            android.util.Log.i("DatabaseProvider", "Found snapshot at: ${snapshotFile.absolutePath}")
+            android.util.Log.i("DatabaseProvider", "Snapshot size: ${snapshotFile.length()} bytes")
+            try {
                 builder.createFromFile(snapshotFile)
-            } else {
-                val snapshotDir = getSnapshotDirectory(context)
-                android.util.Log.d("DatabaseProvider", "No snapshot file found. Creating empty database.")
-                android.util.Log.d("DatabaseProvider", "Snapshots will be saved to: ${File(snapshotDir, SNAPSHOT_FILENAME).absolutePath}")
-                android.util.Log.d("DatabaseProvider", "Run tests to generate snapshot, or place $SNAPSHOT_FILENAME in app/src/main/assets/")
+                android.util.Log.i("DatabaseProvider", "createFromFile() called successfully")
+            } catch (e: Exception) {
+                android.util.Log.e("DatabaseProvider", "Error calling createFromFile()", e)
                 builder.fallbackToDestructiveMigration()
             }
         } else {
-            builder.fallbackToDestructiveMigration()
+            val snapshotDir = getSnapshotDirectory(context)
+            android.util.Log.w("DatabaseProvider", "No snapshot file found. Creating empty database.")
+            android.util.Log.d("DatabaseProvider", "Checked locations:")
+            android.util.Log.d("DatabaseProvider", "  - Assets: $SNAPSHOT_FILENAME")
+            android.util.Log.d("DatabaseProvider", "  - Snapshot dir: ${File(snapshotDir, SNAPSHOT_FILENAME).absolutePath}")
+            builder.fallbackToDestructiveMigration(false)
         }
 
-        return builder.build()
+        android.util.Log.d("DatabaseProvider", "Building database...")
+        val db = try {
+            builder.build()
+        } catch (e: Exception) {
+            android.util.Log.e("DatabaseProvider", "FATAL: Failed to build database", e)
+            throw e
+        }
+
+        android.util.Log.i("DatabaseProvider", "Database built successfully: ${db.javaClass.simpleName}")
+        android.util.Log.d("DatabaseProvider", "Database path: ${context.getDatabasePath(DB_NAME).absolutePath}")
+
+        return db
     }
 
     /**

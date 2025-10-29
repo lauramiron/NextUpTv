@@ -10,13 +10,18 @@ android {
 
     defaultConfig {
         applicationId = "io.github.lauramiron.nextuptv"
-        minSdk = 23
+        minSdk = 24
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
-        // Add your RapidAPI key here (get it from https://rapidapi.com/)
         buildConfigField("String", "RAPIDAPI_KEY", "\"YOUR_API_KEY_HERE\"")
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments["room.schemaLocation"] = file("schemas").path
+            }
+        }
     }
 
     buildFeatures {
@@ -31,6 +36,7 @@ android {
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("debug")
+            isDebuggable = true
         }
     }
     compileOptions {

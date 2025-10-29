@@ -9,6 +9,7 @@ import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
 import io.github.lauramiron.nextuptv.data.local.entity.TitleEntity
 import io.github.lauramiron.nextuptv.data.local.entity.TitleGenreCrossRef
 import io.github.lauramiron.nextuptv.data.local.entity.TitlePersonCrossRef
+import io.github.lauramiron.nextuptv.data.local.entity.TitleWithExternalId
 import io.github.lauramiron.nextuptv.data.mappers.extractUsStreamingOptions
 import io.github.lauramiron.nextuptv.data.mappers.toCast
 import io.github.lauramiron.nextuptv.data.mappers.toDirectors
@@ -194,5 +195,27 @@ class LibraryRepository(
             println("Error syncing $provider top shows: ${e.message}")
             SyncReport()
         }
+    }
+
+    /**
+     * Get the top titles for a streaming service from the local database.
+     * Returns titles ordered by their position in the popularity rankings.
+     *
+     * @param service The streaming service to query
+     * @return List of TitleEntity objects representing the top shows
+     */
+    suspend fun topTitles(service: StreamingService): List<TitleEntity> = withContext(io) {
+        db.popularityDao().getTopShowsForService(service)
+    }
+
+    /**
+     * Get the top titles for a streaming service along with their external IDs.
+     * This enables constructing service-specific launch URLs.
+     *
+     * @param service The streaming service to query
+     * @return List of TitleWithExternalId objects containing both title data and external IDs
+     */
+    suspend fun topTitlesWithExternalIds(service: StreamingService): List<TitleWithExternalId> = withContext(io) {
+        db.popularityDao().getTopShowsWithExternalIds(service)
     }
 }

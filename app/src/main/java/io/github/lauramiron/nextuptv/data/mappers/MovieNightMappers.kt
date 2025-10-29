@@ -1,5 +1,7 @@
 package io.github.lauramiron.nextuptv.data.mappers
 
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import io.github.lauramiron.nextuptv.data.local.entity.CreditRole
 import io.github.lauramiron.nextuptv.data.local.entity.ExternalIdEntity
 import io.github.lauramiron.nextuptv.data.local.entity.PersonEntity
@@ -7,8 +9,15 @@ import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
 import io.github.lauramiron.nextuptv.data.local.entity.TitleEntity
 import io.github.lauramiron.nextuptv.data.local.entity.TitleKind
 import io.github.lauramiron.nextuptv.data.local.entity.TitlePersonCrossRef
+import io.github.lauramiron.nextuptv.data.remote.movienight.ImageSetDto
 import io.github.lauramiron.nextuptv.data.remote.movienight.StreamingOptionDto
 import io.github.lauramiron.nextuptv.data.remote.movienight.TitleDto
+
+// Moshi instance for converting DTOs to JSON
+private val moshi = Moshi.Builder()
+    .add(KotlinJsonAdapterFactory())
+    .build()
+private val imageSetAdapter = moshi.adapter(ImageSetDto::class.java)
 
 fun TitleDto.toEntity(): TitleEntity {
     val kind = when (showType?.lowercase()) {
@@ -16,6 +25,10 @@ fun TitleDto.toEntity(): TitleEntity {
         "movie", null, ""      -> TitleKind.MOVIE
         else                   -> TitleKind.MOVIE
     }
+
+    // Convert ImageSetDto to JSON string
+    val imageSetJson = this.imageSet?.let { imageSetAdapter.toJson(it) }
+
     return TitleEntity(
         id=0L,
         monId = this.id,
@@ -24,7 +37,8 @@ fun TitleDto.toEntity(): TitleEntity {
         synopsis = this.overview,
         year = this.releaseYear,
         runtimeMin = this.runtime,
-        imageSetJson = this.imageSet?.toString());
+        imageSetJson = imageSetJson
+    )
 }
 
 //fun EpisodeDto.toEntity(titleId: Long): EpisodeEntity {
