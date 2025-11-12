@@ -18,12 +18,8 @@ class DeepLinkTestCardPresenter : Presenter() {
     override fun onBindViewHolder(viewHolder: ViewHolder, item: Any) {
         val card = viewHolder.view as ImageCardView
         val test = item as DeepLinkItem
-        card.titleText = test.title
-        card.contentText = "ID: ${test.netflixId}"
-        val placeholder = test.imageResId?.let {
-            ContextCompat.getDrawable(card.context, it)
-        }
-        card.mainImageView.setImageDrawable(placeholder)
+        card.titleText = test.methodName
+        card.contentText = "${test.service.id.uppercase()}: ${test.titleName}\nID: ${test.externalId}"
     }
 
     override fun onUnbindViewHolder(viewHolder: ViewHolder) = Unit

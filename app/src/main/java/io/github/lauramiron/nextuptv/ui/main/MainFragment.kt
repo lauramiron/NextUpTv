@@ -37,6 +37,7 @@ import io.github.lauramiron.nextuptv.ui.common.StreamingLauncher
 import io.github.lauramiron.nextuptv.ui.deeplinktest.DeepLinkItem
 import io.github.lauramiron.nextuptv.ui.deeplinktest.DeepLinkTestCardPresenter
 import io.github.lauramiron.nextuptv.ui.deeplinktest.DeeplinkTester
+import io.github.lauramiron.nextuptv.ui.deeplinktest.LaunchMethod
 import io.github.lauramiron.nextuptv.ui.details.MovieItem
 import io.github.lauramiron.nextuptv.ui.resume.ResumeCardPresenter
 import kotlinx.coroutines.launch
@@ -99,12 +100,47 @@ class MainFragment : BrowseSupportFragment() {
         searchAffordanceColor = ContextCompat.getColor(requireActivity(), R.color.search_opaque)
     }
 
-    private fun addDeepLinkTestRow(rowsAdapter: ArrayObjectAdapter) {
-        // Replace IDs with ones you want to test
+    /**
+     * Add deeplink test row for a specific streaming service.
+     * Shows multiple launch methods for a single title.
+     */
+    private fun addDeepLinkTestRow(
+        rowsAdapter: ArrayObjectAdapter,
+        service: StreamingService,
+        titleName: String,
+        externalId: String,
+        headerId: Long
+    ) {
+        // Create test cards for different launch methods
         val tests = listOf(
-            DeepLinkItem("Stranger Things", "80077368"),
-            DeepLinkItem("Dark", "80114790"),
-            DeepLinkItem("Black Mirror", "81716301")
+            DeepLinkItem(
+                methodName = "HTTPS + Package",
+                service = service,
+                externalId = externalId,
+                titleName = titleName,
+                launchMethod = LaunchMethod.HTTPS_WITH_PACKAGE
+            ),
+            DeepLinkItem(
+                methodName = "HTTPS Only",
+                service = service,
+                externalId = externalId,
+                titleName = titleName,
+                launchMethod = LaunchMethod.HTTPS_NO_PACKAGE
+            ),
+            DeepLinkItem(
+                methodName = "Custom Scheme",
+                service = service,
+                externalId = externalId,
+                titleName = titleName,
+                launchMethod = LaunchMethod.CUSTOM_SCHEME
+            ),
+            DeepLinkItem(
+                methodName = "Web Fallback",
+                service = service,
+                externalId = externalId,
+                titleName = titleName,
+                launchMethod = LaunchMethod.WEB_FALLBACK
+            )
         )
 
         val cardPresenter = DeepLinkTestCardPresenter()
@@ -112,7 +148,7 @@ class MainFragment : BrowseSupportFragment() {
             tests.forEach { add(it) }
         }
 
-        val header = HeaderItem(1000L, "Netflix Deep Link Tests")
+        val header = HeaderItem(headerId, "${service.id.uppercase()} Deeplink Test: $titleName")
         rowsAdapter.add(ListRow(header, rowAdapter))
     }
 
@@ -146,18 +182,22 @@ class MainFragment : BrowseSupportFragment() {
         // Top Shows rows for each streaming service
         addTopShowsRows(rowsAdapter)
 
-        // Test Deeplinks row
-        addDeepLinkTestRow(rowsAdapter)
+        // Test Deeplinks rows - one per service with example titles
+        addDeepLinkTestRow(
+            rowsAdapter = rowsAdapter,
+            service = StreamingService.NETFLIX,
+            titleName = "Stranger Things",
+            externalId = "80057281",
+            headerId = 2000L
+        )
 
-
-//        val gridHeader = HeaderItem(NUM_ROWS.toLong(), "PREFERENCES")
-//
-//        val mGridPresenter = GridItemPresenter()
-//        val gridRowAdapter = ArrayObjectAdapter(mGridPresenter)
-//        gridRowAdapter.add(resources.getString(R.string.grid_view))
-//        gridRowAdapter.add(getString(R.string.error_fragment))
-//        gridRowAdapter.add(resources.getString(R.string.personal_settings))
-//        rowsAdapter.add(ListRow(gridHeader, gridRowAdapter))
+        addDeepLinkTestRow(
+            rowsAdapter = rowsAdapter,
+            service = StreamingService.APPLE,
+            titleName = "Severance",
+            externalId = "umc.cmc.1srk2goyh2q2zdxcx605w8vtx",
+            headerId = 2001L
+        )
 
         adapter = rowsAdapter
     }
@@ -243,7 +283,7 @@ class MainFragment : BrowseSupportFragment() {
                 }
 
                 is DeepLinkItem -> {
-                    DeeplinkTester.launch(requireContext(), item.netflixId)
+                    DeeplinkTester.launch(requireContext(), item)
                 }
             }
         }
@@ -290,32 +330,9 @@ class MainFragment : BrowseSupportFragment() {
         }
     }
 
-//    private inner class GridItemPresenter : Presenter() {
-//        override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
-//            val view = TextView(parent.context)
-//            view.layoutParams = ViewGroup.LayoutParams(GRID_ITEM_WIDTH, GRID_ITEM_HEIGHT)
-//            view.isFocusable = true
-//            view.isFocusableInTouchMode = true
-//            view.setBackgroundColor(ContextCompat.getColor(activity!!, R.color.default_background))
-//            view.setTextColor(Color.WHITE)
-//            view.gravity = Gravity.CENTER
-//            return ViewHolder(view)
-//        }
-//
-//        override fun onBindViewHolder(viewHolder: ViewHolder, item: Any) {
-//            (viewHolder.view as TextView).text = item as String
-//        }
-//
-//        override fun onUnbindViewHolder(viewHolder: ViewHolder) {}
-//    }
-
     companion object {
         private val TAG = "MainFragment"
 
         private val BACKGROUND_UPDATE_DELAY = 300
-        private val GRID_ITEM_WIDTH = 200
-        private val GRID_ITEM_HEIGHT = 200
-        private val NUM_ROWS = 6
-        private val NUM_COLS = 15
     }
 }
