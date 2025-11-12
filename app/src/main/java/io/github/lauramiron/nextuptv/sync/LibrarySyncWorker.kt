@@ -34,7 +34,7 @@ class LibrarySyncWorker(
     }
 
     private suspend fun runFullSync(): Result {
-        repo.syncAll()
+        repo.syncAll(catalogs = "netflix") // TODO
         return Result.success()
     }
 

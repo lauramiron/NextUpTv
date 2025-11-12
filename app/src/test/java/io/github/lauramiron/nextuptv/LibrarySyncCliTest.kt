@@ -55,14 +55,13 @@ class LibrarySyncCliTest {
     }
 
     /**
+     * Helper function to run a full sync for any streaming service.
      * This is NOT a real test - it's a CLI wrapper.
      * It will always "pass" even if sync encounters errors.
-     *
-     * Use this to run the full Netflix sync without test timeout constraints.
      */
-    @Test
-    fun runFullNetflixSync() = runBlocking {
-        println("=== Full Netflix Sync (No Timeout) ===")
+    private suspend fun runFullSyncForService(service: StreamingService) {
+        val serviceName = service.id.uppercase()
+        println("=== Full $serviceName Sync (No Timeout) ===")
         println("This will take several minutes. Be patient!")
         println()
 
@@ -76,7 +75,7 @@ class LibrarySyncCliTest {
 
             // Run the sync with no page limit
             println("Starting sync...")
-            val report = repository.syncAll(catalogs = "netflix")
+            val report = repository.syncAll(catalogs = service.id)
 
             // Print results
             val finalCount = db.titleDao().countAll()
@@ -108,6 +107,50 @@ class LibrarySyncCliTest {
             e.printStackTrace()
             // Don't throw - let the test "pass" so you can see the output
         }
+    }
+
+    /**
+     * This is NOT a real test - it's a CLI wrapper.
+     * It will always "pass" even if sync encounters errors.
+     *
+     * Use this to run the full Netflix sync without test timeout constraints.
+     */
+    @Test
+    fun runFullNetflixSync() = runBlocking {
+        runFullSyncForService(StreamingService.NETFLIX)
+    }
+
+    /**
+     * This is NOT a real test - it's a CLI wrapper.
+     * It will always "pass" even if sync encounters errors.
+     *
+     * Use this to run the full Apple sync without test timeout constraints.
+     */
+    @Test
+    fun runFullAppleSync() = runBlocking {
+        runFullSyncForService(StreamingService.APPLE)
+    }
+
+    /**
+     * This is NOT a real test - it's a CLI wrapper.
+     * It will always "pass" even if sync encounters errors.
+     *
+     * Use this to run the full HBO sync without test timeout constraints.
+     */
+    @Test
+    fun runFullHboSync() = runBlocking {
+        runFullSyncForService(StreamingService.HBO)
+    }
+
+    /**
+     * This is NOT a real test - it's a CLI wrapper.
+     * It will always "pass" even if sync encounters errors.
+     *
+     * Use this to run the full Prime sync without test timeout constraints.
+     */
+    @Test
+    fun runFullPrimeSync() = runBlocking {
+        runFullSyncForService(StreamingService.PRIME)
     }
 
     /**
@@ -169,7 +212,7 @@ class LibrarySyncCliTest {
      */
     @Test
     fun syncTopShowsForOneService() = runBlocking {
-        val service = StreamingService.NETFLIX
+        val service = StreamingService.APPLE
         println("=== Sync Top Shows for ${service.id.uppercase()} ===")
         println()
 

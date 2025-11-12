@@ -15,7 +15,7 @@ interface MovieNightApiService {
     suspend fun searchShows(
         @Header("X-RapidAPI-Key") apiKey: String,
         @Query("country") country: String = "us",
-        @Query("catalogs") catalogs: String = "netflix",
+        @Query("catalogs") catalogs: String,
         @Query("cursor") cursor: String? = null
     ): ShowSearchResponseDto
 
@@ -128,7 +128,7 @@ class MovieNightApi(
      * Emit pages incrementally (useful if you want to stream into DB page-by-page).
      */
     fun fetchShowsPagingFlow(
-        catalogs: String = "netflix",
+        catalogs: String,
         startCursor: String? = null,
         maxPages: Int? = null
     ): Flow<ShowSearchResponseDto> = flow {

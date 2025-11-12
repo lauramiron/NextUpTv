@@ -8,9 +8,7 @@ import androidx.room.PrimaryKey
     tableName = "resume_entries",
     indices = [
         Index(value = ["serviceId", "serviceItemId"]),
-        Index(value = ["lastWatchedAt"]),
         Index(value = ["resolvedTitleId"]),
-        Index(value = ["hashKey"], unique = true)
     ]
 )
 data class ResumeEntryEntity(

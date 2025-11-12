@@ -65,15 +65,27 @@ interface ExternalIdDao {
     // 3) Find existing row id by natural key (unique index recommended)
     @Query("""
         SELECT id FROM external_ids
-        WHERE entityId = :entityId AND provider = :provider
+        WHERE entityId = :entityId AND service = :service
         LIMIT 1
     """)
-    suspend fun findId(entityId: Long, provider: StreamingService): Long?
+    suspend fun findId(entityId: Long, service: StreamingService): Long?
+
+    /**
+     * Find a title by external service and service item ID.
+     * Used for resolving resume entries to titles.
+     */
+    @Query("""
+        SELECT t.* FROM titles t
+        INNER JOIN external_ids e ON t.id = e.entityId
+        WHERE e.service = :service AND e.serviceItemId = :serviceItemId
+        LIMIT 1
+    """)
+    suspend fun findTitleByExternal(service: StreamingService, serviceItemId: String): TitleEntity?
 
     /**
      * Upsert all:
      * - INSERT IGNORE first
-     * - For conflicts, look up existing ids and UPDATE with latest providerId/available/price
+     * - For conflicts, look up existing ids and UPDATE with latest serviceItemId/available/price
      * Returns the number of rows processed.
      */
     @Transaction
@@ -86,7 +98,7 @@ interface ExternalIdDao {
         results.forEachIndexed { i, rowId ->
             if (rowId == -1L) {
                 val e = items[i]
-                val id = findId(e.entityId, e.provider)
+                val id = findId(e.entityId, e.service)
                 if (id != null) {
                     // carry over the PK and update the mutable columns
                     toUpdate += e.copy(id = id)
@@ -236,13 +248,13 @@ interface PopularityDao {
 
     /**
      * Get top shows for a service along with their external IDs for that service.
-     * Returns a map of titleId to externalId (providerId from external_ids table).
+     * Returns a map of titleId to externalId (serviceItemId from external_ids table).
      */
     @Query("""
-        SELECT t.*, e.providerId as externalId
+        SELECT t.*, e.serviceItemId as externalId
         FROM titles t
         INNER JOIN title_popularities p ON t.id = p.titleId
-        LEFT JOIN external_ids e ON t.id = e.entityId AND e.provider = :service
+        LEFT JOIN external_ids e ON t.id = e.entityId AND e.service = :service
         WHERE p.service = :service
         AND p.popularityType = 'TOP_SHOWS'
         ORDER BY p.id ASC

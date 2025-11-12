@@ -18,19 +18,17 @@ import io.github.lauramiron.nextuptv.data.local.AppDb
 import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
 import io.github.lauramiron.nextuptv.data.remote.movienight.MovieNightApiFactory
 import io.github.lauramiron.nextuptv.sync.LibrarySyncWorker
-import io.github.lauramiron.nextuptva.TestWorkerFactory
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
 import java.util.concurrent.Executors
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 @RunWith(AndroidJUnit4::class)
@@ -331,12 +329,3 @@ class LibrarySyncWorkerTest {
         }
     }
 }
-
-/** Small await helper for WorkInfo (optional). */
-suspend fun ListenableFuture<WorkInfo>.await(): WorkInfo =
-    suspendCancellableCoroutine { cont ->
-        addListener(
-            { cont.resume(get()) {} },
-            Executors.newSingleThreadExecutor()
-        )
-    }

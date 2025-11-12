@@ -31,7 +31,7 @@ enum class StreamingService(val id: String) {
         return when (this) {
             NETFLIX -> {
                 // {userId} is a placeholder for user-specific Netflix ID, to be substituted by calling code
-                "https://www.netflix.com/watch/{userId}?trackId=$externalId"
+                "https://www.netflix.com/watch/$externalId"
             }
             PRIME -> {
                 // TODO: Verify Prime Video URL format and test deep linking
@@ -175,13 +175,13 @@ data class TitlePersonCrossRef(
 // ---- EXTERNAL IDS (lookup by Netflix/etc or by MovieOfTheNight itself) ----
 @Entity(
     tableName = "external_ids",
-    indices = [Index(value = ["entityId", "provider"], unique = true), Index("entityId")])
+    indices = [Index(value = ["entityId", "service"], unique = true), Index("entityId")])
 data class ExternalIdEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
 //    val entityType: String,            // "title" | "episode"
     val entityId: Long,                // FK to titles.id or episodes.id (enforce in code)
-    val provider: StreamingService,   // streaming service provider
-    val providerId: String,
+    val service: StreamingService,     // streaming service
+    val serviceItemId: String,         // service-specific ID for this item
     val available: Boolean,
     val price: Short
 //    val showLink: String,

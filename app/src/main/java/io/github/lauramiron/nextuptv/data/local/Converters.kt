@@ -4,6 +4,7 @@ import androidx.room.TypeConverter
 import io.github.lauramiron.nextuptv.data.local.entity.ArtworkType
 import io.github.lauramiron.nextuptv.data.local.entity.CreditRole
 import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
+import io.github.lauramiron.nextuptv.data.local.entity.SyncType
 import io.github.lauramiron.nextuptv.data.local.entity.TitleKind
 import java.util.Date
 
@@ -25,6 +26,11 @@ class Converters {
         return StreamingService.fromString(value)
             ?: throw IllegalArgumentException("Unknown StreamingProvider: $value")
     }
+
+    @TypeConverter
+    fun fromSyncType(v: SyncType) = v.name
+    @TypeConverter
+    fun toSyncType(s: String) = SyncType.valueOf(s)
 
     @TypeConverter
     fun fromTimestamp(value: Long?): Date? {

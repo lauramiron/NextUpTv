@@ -6,6 +6,7 @@ import androidx.room.TypeConverters
 //import io.github.lauramiron.nextuptv.data.local.dao.EpisodeDao
 import io.github.lauramiron.nextuptv.data.local.dao.ExternalIdDao
 import io.github.lauramiron.nextuptv.data.local.dao.GenreDao
+import io.github.lauramiron.nextuptv.data.local.dao.LibrarySyncMetadataDao
 import io.github.lauramiron.nextuptv.data.local.dao.PersonDao
 import io.github.lauramiron.nextuptv.data.local.dao.PopularityDao
 import io.github.lauramiron.nextuptv.data.local.dao.ResumeDao
@@ -16,8 +17,10 @@ import io.github.lauramiron.nextuptv.data.local.entity.TitlePersonCrossRef
 import io.github.lauramiron.nextuptv.data.local.entity.EpisodeEntity
 import io.github.lauramiron.nextuptv.data.local.entity.ExternalIdEntity
 import io.github.lauramiron.nextuptv.data.local.entity.GenreEntity
+import io.github.lauramiron.nextuptv.data.local.entity.LibrarySyncMetadataEntity
 import io.github.lauramiron.nextuptv.data.local.entity.PersonEntity
 import io.github.lauramiron.nextuptv.data.local.entity.PopularityEntity
+import io.github.lauramiron.nextuptv.data.local.entity.ResumeEntryEntity
 import io.github.lauramiron.nextuptv.data.local.entity.TitleEntity
 import io.github.lauramiron.nextuptv.data.local.entity.TitleGenreCrossRef
 
@@ -26,9 +29,9 @@ import io.github.lauramiron.nextuptv.data.local.entity.TitleGenreCrossRef
         TitleEntity::class, EpisodeEntity::class,
         GenreEntity::class, TitleGenreCrossRef::class,
         PersonEntity::class, TitlePersonCrossRef::class, ExternalIdEntity::class,
-        PopularityEntity::class
+        PopularityEntity::class, ResumeEntryEntity::class, LibrarySyncMetadataEntity::class
     ],
-    version = 1, exportSchema = true
+    version = 5, exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class AppDb : RoomDatabase() {
@@ -41,5 +44,6 @@ abstract class AppDb : RoomDatabase() {
     abstract fun titlePersonDao(): TitlePersonCrossRefDao
     abstract fun popularityDao(): PopularityDao
 
-//    abstract fun resumeDao(): ResumeDao
+    abstract fun resumeDao(): ResumeDao
+    abstract fun librarySyncMetadataDao(): LibrarySyncMetadataDao
 }

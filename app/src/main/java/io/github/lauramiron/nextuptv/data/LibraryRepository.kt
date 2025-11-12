@@ -1,15 +1,21 @@
 package io.github.lauramiron.nextuptv.data
 
 import androidx.room.withTransaction
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import io.github.lauramiron.nextuptv.data.local.AppDb
 import io.github.lauramiron.nextuptv.data.local.entity.CreditRole
+import io.github.lauramiron.nextuptv.data.local.entity.LibrarySyncMetadataEntity
 import io.github.lauramiron.nextuptv.data.local.entity.PersonEntity
 import io.github.lauramiron.nextuptv.data.local.entity.PopularityEntity
 import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
+import io.github.lauramiron.nextuptv.data.local.entity.SyncType
 import io.github.lauramiron.nextuptv.data.local.entity.TitleEntity
 import io.github.lauramiron.nextuptv.data.local.entity.TitleGenreCrossRef
 import io.github.lauramiron.nextuptv.data.local.entity.TitlePersonCrossRef
 import io.github.lauramiron.nextuptv.data.local.entity.TitleWithExternalId
+import java.util.Date
 import io.github.lauramiron.nextuptv.data.mappers.extractUsStreamingOptions
 import io.github.lauramiron.nextuptv.data.mappers.toCast
 import io.github.lauramiron.nextuptv.data.mappers.toDirectors
@@ -28,6 +34,14 @@ class LibraryRepository(
     private val db: AppDb,
     private val io: CoroutineDispatcher = Dispatchers.IO
 ) {
+    // Moshi for serializing sync metadata
+    private val moshi = Moshi.Builder()
+        .add(KotlinJsonAdapterFactory())
+        .build()
+
+    private val stringListAdapter = moshi.adapter<List<String>>(
+        Types.newParameterizedType(List::class.java, String::class.java)
+    )
 
     data class SyncReport(
         var pages: Int = 0,
@@ -57,39 +71,93 @@ class LibraryRepository(
 
     /**
      * Full library sync from MovieOfTheNight (RapidAPI) into local Room DB.
-     * - Streams pages with backoff via MovieNightApi
+     * - Streams pages with backoff via MovieNightApi using Flow (similar to yield/generators)
+     * - Inserts into database after each page for incremental progress
      * - Upserts Titles, Episodes, ExternalIds, People, Genres, CrossRefs
      * - Artwork JSON lives inline on Title/Episode entities (your mappers set it)
      * - Streaming options: store only what you decided (e.g., serviceId only) in your mapper
+     * - Logs sync metadata for tracking and resuming interrupted syncs
      */
     suspend fun syncAll(
-        catalogs: String = "netflix",
+        catalogs: String,
         startCursor: String? = null,
         maxPages: Int = -1
     ): SyncReport {
+        val services = catalogs.split(",").map { it.trim() }
+        val servicesJson = stringListAdapter.toJson(services)
+
+        val syncMetadata = LibrarySyncMetadataEntity(
+            timestamp = Date(),
+            syncType = SyncType.FULL,
+            success = false,
+            servicesJson = servicesJson,
+            metadataJson = null,
+            nextCursor = startCursor
+        )
+
+        val metadataId = db.librarySyncMetadataDao().insert(syncMetadata)
+
+        return try {
+            val report = performSync(catalogs, startCursor, maxPages)
+
+            // Update metadata with success
+            val reportJson = moshi.adapter(SyncReport::class.java).toJson(report)
+            db.librarySyncMetadataDao().insert(
+                syncMetadata.copy(
+                    id = 0, // Insert new record for successful completion
+                    success = true,
+                    metadataJson = reportJson,
+                    nextCursor = null // Cleared on success
+                )
+            )
+
+            report
+        } catch (e: Exception) {
+            // Update metadata with failure and last cursor
+            val partialReportJson = moshi.adapter(SyncReport::class.java).toJson(SyncReport())
+            db.librarySyncMetadataDao().insert(
+                syncMetadata.copy(
+                    id = 0, // Insert new record for failure
+                    success = false,
+                    metadataJson = partialReportJson,
+                    nextCursor = null // Could capture last successful cursor here if needed
+                )
+            )
+            throw e
+        }
+    }
+
+    private suspend fun performSync(
+        catalogs: String,
+        startCursor: String?,
+        maxPages: Int
+    ): SyncReport {
         val report = SyncReport()
         var pagesProcessed = 0
-        var cursor = startCursor
 
-        do {
-            val (titleDtos, nextCursor) = api.fetchAllShows(catalogs=catalogs, startCursor=cursor, maxPages=1)
-
+        // Use Flow to process pages incrementally as they arrive
+        api.fetchShowsPagingFlow(
+            catalogs = catalogs,
+            startCursor = startCursor,
+            maxPages = if (maxPages == -1) null else maxPages
+        ).collect { response ->
+            // Process this page immediately and insert into database
             val pageReport = SyncReport()
-            titleDtos.forEach { titleDto ->
+
+            response.shows.forEach { titleDto ->
                 pageReport += upsertOneTitleTree(titleDto)
             }
 
             pagesProcessed++
             report.pages = pagesProcessed
             report += pageReport
-            cursor = nextCursor
+            report.lastCursor = response.nextCursor
 
-            println("Page $pagesProcessed: ${titleDtos.size} titles | " +
+            println("Page $pagesProcessed: ${response.shows.size} titles | " +
                     "+${pageReport.titlesUpserted} titles, " +
                     "+${pageReport.genresUpserted} genres, " +
                     "+${pageReport.peopleUpserted} people")
-
-        } while (((maxPages == -1) || (pagesProcessed < maxPages)) && (cursor != null))
+        }
 
         return report
     }

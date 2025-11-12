@@ -15,7 +15,8 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        buildConfigField("String", "RAPIDAPI_KEY", "\"YOUR_API_KEY_HERE\"")
+//        buildConfigField("String", "RAPIDAPI_KEY", "\"YOUR_API_KEY_HERE\"")
+        buildConfigField("String", "RAPIDAPI_KEY", "\"96da59657emsh4a212c55a8a0cdep152371jsnc0a31a8bc448\"")
 
         javaCompileOptions {
             annotationProcessorOptions {

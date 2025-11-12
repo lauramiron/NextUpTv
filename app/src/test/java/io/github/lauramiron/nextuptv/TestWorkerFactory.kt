@@ -1,4 +1,4 @@
-package io.github.lauramiron.nextuptva
+package io.github.lauramiron.nextuptv
 
 import android.content.Context
 import androidx.work.ListenableWorker
@@ -13,11 +13,11 @@ class TestWorkerFactory(
     override fun createWorker(
         appContext: Context,
         workerClassName: String,
-        params: WorkerParameters
+        workerParameters: WorkerParameters
     ): ListenableWorker? {
         return when (Class.forName(workerClassName)) {
             LibrarySyncWorker::class.java -> {
-                LibrarySyncWorker(appContext, params, repositoryProvider())
+                LibrarySyncWorker(appContext, workerParameters, repositoryProvider())
             }
             else -> null
         }

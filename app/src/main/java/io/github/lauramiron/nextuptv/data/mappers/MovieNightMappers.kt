@@ -155,17 +155,17 @@ private fun TitleDto.isSeries(): Boolean =
     this.showType.equals("series", true)
 
 fun StreamingOptionDto.toExternalIdEntity(titleId: Long): ExternalIdEntity? {
-    val providerString = service.id.lowercase()
-    val provider = StreamingService.fromString(providerString) ?: return null // skip unsupported providers
+    val serviceString = service.id.lowercase()
+    val streamingService = StreamingService.fromString(serviceString) ?: return null // skip unsupported services
 
-    val providerId = when (provider) {
+    val serviceItemId = when (streamingService) {
         StreamingService.NETFLIX -> parseNetflixId(link ?: videoLink) ?: "unknown"
-        else -> "unknown" // add cases for disney/hbo/prime/etc later
+        else -> link ?: videoLink ?: "unknown"// add cases for disney/hbo/prime/etc later
     }
 
     return ExternalIdEntity(
-        provider = provider,
-        providerId = providerId,
+        service = streamingService,
+        serviceItemId = serviceItemId,
         entityId = titleId,
         available = true,
         price = 0
