@@ -45,10 +45,16 @@ interface ResumeDao {
     )
 
     // Feed for UI: give recent, resolved-first, but include unresolved fallbacks
+    // Joins with external_ids to get the link for building launch URLs
     @Query("""
-        SELECT re.*, t.name AS resolvedTitleName, t.imageSetJson AS resolvedTitleImage
+        SELECT re.*,
+               t.name AS resolvedTitleName,
+               t.imageSetJson AS resolvedTitleImage,
+               e.link AS externalLink,
+               e.serviceItemId AS externalServiceItemId
         FROM resume_entries re
         LEFT JOIN titles t ON t.id = re.resolvedTitleId
+        LEFT JOIN external_ids e ON e.entityId = re.resolvedTitleId AND e.service = re.serviceId
         ORDER BY resumeIndex
         LIMIT :limit
     """)
@@ -59,5 +65,7 @@ interface ResumeDao {
 data class ResumeWithTitleRow(
     @Embedded val entry: ResumeEntryEntity,
     val resolvedTitleName: String?,
-    val resolvedTitleImage: String?
+    val resolvedTitleImage: String?,
+    val externalLink: String?,          // Link from external_ids table (preferred)
+    val externalServiceItemId: String?  // ServiceItemId from external_ids table (fallback)
 )

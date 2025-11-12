@@ -112,6 +112,7 @@ object DatabaseProvider {
             AppDb::class.java,
             DB_NAME
         )
+            .addMigrations(MIGRATION_5_6)
 
         // Try to load from snapshot
         android.util.Log.d("DatabaseProvider", "DEBUG build - checking for snapshot")

@@ -183,9 +183,8 @@ data class ExternalIdEntity(
     val service: StreamingService,     // streaming service
     val serviceItemId: String,         // service-specific ID for this item
     val available: Boolean,
-    val price: Short
-//    val showLink: String,
-//    val videoLink: String
+    val price: Short,
+    val link: String? = null           // Original URL from API (showLink or videoLink)
 )
 
 @Entity(

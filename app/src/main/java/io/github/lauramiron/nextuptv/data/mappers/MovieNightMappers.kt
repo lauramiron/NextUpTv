@@ -64,6 +64,9 @@ fun TitleDto.extractUsStreamingOptions(): List<StreamingOptionDto> {
 private fun parseNetflixId(url: String?): String? =
     url?.let { u -> Regex("""/(title|watch)/(\d+)""").find(u)?.groupValues?.getOrNull(2) }
 
+private fun parseAppleId(url: String?): String? =
+    url?.substringAfterLast('/')?.takeIf { it.isNotBlank() }
+
 // Pulls “/title/########/” from a US netflix link, if present
 private fun TitleDto.extractUsNetflixTitleId(): String? {
     val country = "us"
@@ -160,6 +163,7 @@ fun StreamingOptionDto.toExternalIdEntity(titleId: Long): ExternalIdEntity? {
 
     val serviceItemId = when (streamingService) {
         StreamingService.NETFLIX -> parseNetflixId(link ?: videoLink) ?: "unknown"
+        StreamingService.APPLE -> parseAppleId(link?: videoLink) ?: "unknown"
         else -> link ?: videoLink ?: "unknown"// add cases for disney/hbo/prime/etc later
     }
 
@@ -168,7 +172,8 @@ fun StreamingOptionDto.toExternalIdEntity(titleId: Long): ExternalIdEntity? {
         serviceItemId = serviceItemId,
         entityId = titleId,
         available = true,
-        price = 0
+        price = 0,
+        link = link ?: videoLink
 //        price = price.toShortAmountOrNull()
     )
 }
