@@ -26,10 +26,11 @@ import com.bumptech.glide.request.transition.Transition
 import io.github.lauramiron.nextuptv.AppSource
 import io.github.lauramiron.nextuptv.NextUpTvApplication
 import io.github.lauramiron.nextuptv.R
-import io.github.lauramiron.nextuptv.ResumeSource
 import io.github.lauramiron.nextuptv.data.LibraryRepository
+import io.github.lauramiron.nextuptv.data.ResumeRepository
 import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
 import io.github.lauramiron.nextuptv.data.mappers.toMovieItem
+import io.github.lauramiron.nextuptv.data.mappers.toResumeItem
 import io.github.lauramiron.nextuptv.ui.app.AppCardPresenter
 import io.github.lauramiron.nextuptv.ui.app.AppItem
 import io.github.lauramiron.nextuptv.ui.common.CardPresenter
@@ -40,6 +41,7 @@ import io.github.lauramiron.nextuptv.ui.deeplinktest.DeeplinkTester
 import io.github.lauramiron.nextuptv.ui.deeplinktest.LaunchMethod
 import io.github.lauramiron.nextuptv.ui.details.MovieItem
 import io.github.lauramiron.nextuptv.ui.resume.ResumeCardPresenter
+import io.github.lauramiron.nextuptv.ui.resume.ResumeItem
 import kotlinx.coroutines.launch
 import java.util.Timer
 import java.util.TimerTask
@@ -56,13 +58,15 @@ class MainFragment : BrowseSupportFragment() {
     private var mBackgroundTimer: Timer? = null
     private var mBackgroundUri: String? = null
     private lateinit var repository: LibraryRepository
+    private lateinit var resumeRepository: ResumeRepository
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         Log.i(TAG, "onCreate")
         super.onActivityCreated(savedInstanceState)
 
-        // Initialize repository
+        // Initialize repositories
         repository = NextUpTvApplication.getRepository(requireContext())
+        resumeRepository = NextUpTvApplication.getResumeRepository(requireContext())
 
         prepareBackgroundManager()
 
@@ -153,16 +157,46 @@ class MainFragment : BrowseSupportFragment() {
     }
 
     private fun addResumeRow(rowsAdapter: ArrayObjectAdapter) {
-        val resumeEntries = ResumeSource().load(requireContext())
-        val presenter = ResumeCardPresenter()
-
-        if (resumeEntries.isEmpty()) return
-
-        val resumeAdapter = ArrayObjectAdapter(presenter).apply {
-            resumeEntries.forEach { add(it) }
-        }
         val header = HeaderItem(1L, "Resume Watching")
+        val presenter = ResumeCardPresenter()
+        val resumeAdapter = ArrayObjectAdapter(presenter)
+
+        // Add empty row first, will be populated asynchronously
         rowsAdapter.add(ListRow(header, resumeAdapter))
+
+        // Load resume entries asynchronously
+        lifecycleScope.launch {
+            try {
+                Log.d(TAG, "Starting to collect resume feed...")
+                resumeRepository.resumeFeed(limit = 30).collect { rows ->
+                    Log.d(TAG, "Resume feed collected ${rows.size} rows")
+
+                    // Convert database rows to UI items
+                    val resumeItems = rows.mapNotNull { row ->
+                        Log.d(TAG, "Processing row: service=${row.entry.serviceId}, titleId=${row.entry.resolvedTitleId}, titleName=${row.resolvedTitleName}, link=${row.externalLink}, serviceItemId=${row.externalServiceItemId}")
+                        val item = row.toResumeItem(requireContext())
+                        if (item == null) {
+                            Log.w(TAG, "Failed to convert row to ResumeItem: $row")
+                        } else {
+                            Log.d(TAG, "Converted to ResumeItem: ${item.title}, deepLink=${item.deepLink?.dataString}")
+                        }
+                        item
+                    }
+
+                    Log.d(TAG, "Total resume items after conversion: ${resumeItems.size}")
+
+                    // Update adapter on main thread
+                    mHandler.post {
+                        resumeAdapter.clear()
+                        resumeItems.forEach { resumeAdapter.add(it) }
+                        Log.d(TAG, "Resume adapter updated with ${resumeItems.size} items")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error loading resume entries", e)
+                e.printStackTrace()
+            }
+        }
     }
 
     private fun loadRows() {
@@ -177,7 +211,7 @@ class MainFragment : BrowseSupportFragment() {
         rowsAdapter.add(ListRow(header, appsRowsAdapter))
 
         // Resume Watching Row
-//        addResumeRow(rowsAdapter)
+        addResumeRow(rowsAdapter)
 
         // Top Shows rows for each streaming service
         addTopShowsRows(rowsAdapter)
@@ -284,6 +318,22 @@ class MainFragment : BrowseSupportFragment() {
 
                 is DeepLinkItem -> {
                     DeeplinkTester.launch(requireContext(), item)
+                }
+
+                is ResumeItem -> {
+                    val deepLink = item.deepLink
+                    if (deepLink != null) {
+                        try {
+                            startActivity(deepLink)
+                        } catch (e: Exception) {
+                            Toast.makeText(requireContext(),
+                                "Failed to launch ${item.title}: ${e.message}", Toast.LENGTH_SHORT).show()
+                            Log.e(TAG, "Failed to launch resume item", e)
+                        }
+                    } else {
+                        Toast.makeText(requireContext(),
+                            "No deep link available for ${item.title}", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         }

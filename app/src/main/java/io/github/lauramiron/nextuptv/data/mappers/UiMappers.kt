@@ -1,12 +1,17 @@
 package io.github.lauramiron.nextuptv.data.mappers
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
+import io.github.lauramiron.nextuptv.data.local.dao.ResumeWithTitleRow
 import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
 import io.github.lauramiron.nextuptv.data.local.entity.TitleEntity
 import io.github.lauramiron.nextuptv.data.local.entity.TitleWithExternalId
 import io.github.lauramiron.nextuptv.ui.details.MovieItem
+import io.github.lauramiron.nextuptv.ui.resume.ResumeItem
 
 /**
  * Convert TitleEntity to MovieItem for UI display (without launch URL)
@@ -72,5 +77,81 @@ private fun parseImageSet(jsonString: String?): Map<String, Map<String, String>>
         adapter.fromJson(jsonString)
     } catch (e: Exception) {
         null
+    }
+}
+
+/**
+ * Convert ResumeWithTitleRow to ResumeItem for UI display.
+ *
+ * Launch URL logic:
+ * 1. If externalLink is not null, use it directly
+ * 2. Otherwise, construct URL from serviceItemId using buildLaunchUrl()
+ * 3. If neither is available, fall back to entry.serviceItemId
+ */
+fun ResumeWithTitleRow.toResumeItem(context: Context): ResumeItem? {
+    // Get the package name for the streaming service
+    val packageName = getServicePackageName(entry.serviceId) ?: return null
+
+    // Determine the launch URL
+    val launchUrl = when {
+        // Prefer the stored link from external_ids table
+        !externalLink.isNullOrBlank() -> externalLink
+
+        // Fall back to constructing from serviceItemId in external_ids
+        !externalServiceItemId.isNullOrBlank() ->
+            entry.serviceId.buildLaunchUrl(externalServiceItemId)
+
+        // Last resort: use serviceItemId from resume entry
+        !entry.serviceItemId.isNullOrBlank() ->
+            entry.serviceId.buildLaunchUrl(entry.serviceItemId)
+
+        else -> null
+    }
+
+    // Build the deep link intent
+    val deepLink = launchUrl?.let { url ->
+        Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+            setPackage(packageName)
+            addCategory(Intent.CATEGORY_BROWSABLE)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            putExtra("source", "30")
+        }
+    }
+
+    // Parse image set for poster
+    val imageSet = parseImageSet(resolvedTitleImage)
+    val posterUrl = imageSet?.get("verticalPoster")?.get("w240")
+        ?: imageSet?.get("horizontalPoster")?.get("w360")
+
+    // Build subtitle (season/episode info if available)
+    val subtitle = buildString {
+        entry.seasonNumber?.let { append("S$it") }
+        if (entry.seasonNumber != null && entry.episodeNumber != null) append(" • ")
+        entry.episodeNumber?.let { append("E$it") }
+    }.takeIf { it.isNotBlank() } ?: "Continue Watching"
+
+    return ResumeItem(
+        title = resolvedTitleName ?: entry.titleText,
+        subtitle = subtitle,
+        progressPercent = 0, // TODO: Add progress tracking
+        poster = null, // TODO: Load poster drawable from URL
+        appPackage = packageName,
+        appBadge = null, // TODO: Load app badge
+        deepLink = deepLink
+    )
+}
+
+/**
+ * Get the package name for a streaming service's TV app
+ */
+private fun getServicePackageName(service: StreamingService): String? {
+    return when (service) {
+        StreamingService.NETFLIX -> "com.netflix.ninja"
+        StreamingService.APPLE -> "com.apple.atv.plus"
+        StreamingService.PRIME -> "com.amazon.avod.thirdpartyclient"
+        StreamingService.DISNEY -> "com.disney.disneyplus"
+        StreamingService.HBO -> "com.hbo.hbonow"
+        StreamingService.HULU -> "com.hulu.plus"
+        StreamingService.PEACOCK -> "com.peacocktv.peacockandroid"
     }
 }

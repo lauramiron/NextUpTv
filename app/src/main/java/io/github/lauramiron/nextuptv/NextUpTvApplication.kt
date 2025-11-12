@@ -3,14 +3,19 @@ package io.github.lauramiron.nextuptv
 import android.app.Application
 import android.util.Log
 import io.github.lauramiron.nextuptv.data.LibraryRepository
+import io.github.lauramiron.nextuptv.data.ResumeRepository
 import io.github.lauramiron.nextuptv.data.local.DatabaseProvider
 import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
 import io.github.lauramiron.nextuptv.data.remote.movienight.MovieNightApiFactory
+import io.github.lauramiron.nextuptv.data.remote.resume.ResumeApiFactory
 import kotlinx.coroutines.runBlocking
 
 class NextUpTvApplication : Application() {
 
     lateinit var libraryRepository: LibraryRepository
+        private set
+
+    lateinit var resumeRepository: ResumeRepository
         private set
 
     override fun onCreate() {
@@ -47,13 +52,22 @@ class NextUpTvApplication : Application() {
 
         libraryRepository = LibraryRepository(api, db)
 
+        // Create resume API and repository
+        val resumeApi = ResumeApiFactory.create(debugLogs = BuildConfig.DEBUG)
+        resumeRepository = ResumeRepository(resumeApi, db)
+
         // DEBUG: Check database title count at startup
         runBlocking {
             try {
                 val titleCount = db.titleDao().countAll()
+                val resumeCount = db.resumeDao().countAll()
+                val resumeUnresolvedCount = db.resumeDao().countUnresolved()
+
                 Log.i(TAG, "========================================")
                 Log.i(TAG, "Database loaded at startup")
                 Log.i(TAG, "Total titles in database: $titleCount")
+                Log.i(TAG, "Total resume entries: $resumeCount")
+                Log.i(TAG, "Unresolved resume entries: $resumeUnresolvedCount")
                 Log.i(TAG, "========================================")
 
                 // Also log if we have any popularity data
@@ -80,6 +94,13 @@ class NextUpTvApplication : Application() {
          */
         fun getRepository(context: android.content.Context): LibraryRepository {
             return (context.applicationContext as NextUpTvApplication).libraryRepository
+        }
+
+        /**
+         * Helper extension function to get ResumeRepository from any Context
+         */
+        fun getResumeRepository(context: android.content.Context): ResumeRepository {
+            return (context.applicationContext as NextUpTvApplication).resumeRepository
         }
     }
 }
