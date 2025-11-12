@@ -42,7 +42,10 @@ class LibrarySyncCliTest {
         db = DatabaseProvider.getInstance(context)
 
         repository = LibraryRepository(
-            api = MovieNightApiFactory.create(apiKey = "96da59657emsh4a212c55a8a0cdep152371jsnc0a31a8bc448"),
+            api = MovieNightApiFactory.create(
+                apiKey = "96da59657emsh4a212c55a8a0cdep152371jsnc0a31a8bc448",
+                debugLogs = true
+            ),
             db = db,
             io = Dispatchers.Default
         )
@@ -203,6 +206,56 @@ class LibrarySyncCliTest {
         }
     }
 
+
+    /**
+     * Same as above but limits to a specific number of pages.
+     * Useful for testing without waiting for the full sync.
+     */
+    @Test
+    fun runPartialAppleSync() = runBlocking {
+        val maxPages = 1
+        println("=== Partial Apple Sync (First $maxPages pages) ===")
+        println()
+
+        val startTime = System.currentTimeMillis()
+
+        try {
+            val initialCount = db.titleDao().countAll()
+            println("Initial title count: $initialCount")
+            println()
+
+            println("Starting sync...")
+            val report = repository.syncAll(catalogs = "apple", maxPages = maxPages)
+
+            val finalCount = db.titleDao().countAll()
+            val elapsed = (System.currentTimeMillis() - startTime) / 1000.0
+
+            println()
+            println("=== Sync Complete ===")
+            println("Time elapsed: ${elapsed}s")
+            println()
+            println("=== Sync Report ===")
+            println("Pages processed: ${report.pages}")
+            println("Titles upserted: ${report.titlesUpserted}")
+            println("External IDs upserted: ${report.externalIdsUpserted}")
+            println("Genres upserted: ${report.genresUpserted}")
+            println("People upserted: ${report.peopleUpserted}")
+            println("Title-Genre refs: ${report.titleGenreRefs}")
+            println("Title-Person refs: ${report.titlePersonRefs}")
+            println()
+            println("Database title count: $initialCount -> $finalCount (+${finalCount - initialCount})")
+            println()
+            println("SUCCESS!")
+
+        } catch (e: Exception) {
+            val elapsed = (System.currentTimeMillis() - startTime) / 1000.0
+            println()
+            println("=== Sync Failed ===")
+            println("Time elapsed: ${elapsed}s")
+            println("Error: ${e.message}")
+            e.printStackTrace()
+        }
+    }
     /**
      * Syncs top shows for a single streaming service.
      * This will fetch the top shows list and upsert all titles with their metadata.
