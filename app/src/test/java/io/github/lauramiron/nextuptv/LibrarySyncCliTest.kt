@@ -6,7 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.lauramiron.nextuptv.data.LibraryRepository
 import io.github.lauramiron.nextuptv.data.local.AppDb
 import io.github.lauramiron.nextuptv.data.local.DatabaseProvider
-import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
+import io.github.lauramiron.nextuptv.util.StreamingService
 import io.github.lauramiron.nextuptv.data.remote.movienight.MovieNightApiFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking

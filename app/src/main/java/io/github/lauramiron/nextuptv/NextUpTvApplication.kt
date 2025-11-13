@@ -5,7 +5,7 @@ import android.util.Log
 import io.github.lauramiron.nextuptv.data.LibraryRepository
 import io.github.lauramiron.nextuptv.data.ResumeRepository
 import io.github.lauramiron.nextuptv.data.local.DatabaseProvider
-import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
+import io.github.lauramiron.nextuptv.util.StreamingService
 import io.github.lauramiron.nextuptv.data.remote.movienight.MovieNightApiFactory
 import io.github.lauramiron.nextuptv.data.remote.resume.ResumeApiFactory
 import kotlinx.coroutines.runBlocking

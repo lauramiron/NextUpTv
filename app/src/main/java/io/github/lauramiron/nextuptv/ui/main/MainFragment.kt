@@ -28,7 +28,7 @@ import io.github.lauramiron.nextuptv.NextUpTvApplication
 import io.github.lauramiron.nextuptv.R
 import io.github.lauramiron.nextuptv.data.LibraryRepository
 import io.github.lauramiron.nextuptv.data.ResumeRepository
-import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
+import io.github.lauramiron.nextuptv.util.StreamingService
 import io.github.lauramiron.nextuptv.data.mappers.toMovieItem
 import io.github.lauramiron.nextuptv.data.mappers.toResumeItem
 import io.github.lauramiron.nextuptv.ui.app.AppCardPresenter
@@ -270,16 +270,16 @@ class MainFragment : BrowseSupportFragment() {
     private fun addTopShowsRows(rowsAdapter: ArrayObjectAdapter) {
         // List of streaming services to display
         val services = listOf(
-            StreamingService.NETFLIX to "Top on Netflix",
-            StreamingService.PRIME to "Top on Prime Video",
-            StreamingService.DISNEY to "Top on Disney+",
-            StreamingService.APPLE to "Top on Apple TV+",
-            StreamingService.HBO to "Top on HBO Max"
+            StreamingService.NETFLIX,
+            StreamingService.PRIME,
+            StreamingService.DISNEY,
+            StreamingService.APPLE,
+            StreamingService.HBO
         )
 
-        services.forEachIndexed { index, (service, title) ->
+        services.forEachIndexed { index, service ->
             val headerId = 100L + index
-            val header = HeaderItem(headerId, title)
+            val header = HeaderItem(headerId, "Top on ${service.displayName}")
             val cardPresenter = CardPresenter()
             val listRowAdapter = ArrayObjectAdapter(cardPresenter)
 
@@ -326,6 +326,8 @@ class MainFragment : BrowseSupportFragment() {
                 is MovieItem -> {
                     val videoUrl = item.videoUrl
                     if (videoUrl != null) {
+                        Toast.makeText(requireContext(),
+                            "Launching videoUrl ${videoUrl}", Toast.LENGTH_SHORT).show()
                         StreamingLauncher.launch(requireContext(), videoUrl)
                     } else {
                         Toast.makeText(requireContext(),

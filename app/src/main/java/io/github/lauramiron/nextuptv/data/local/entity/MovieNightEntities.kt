@@ -6,64 +6,13 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import io.github.lauramiron.nextuptv.util.StreamingService
 import java.util.Date
 
 // --- enums as @IntDef/@StringDef or sealed classes; using String here for brevity ---
 enum class TitleKind { MOVIE, SERIES }
 enum class ArtworkType { POSTER, BACKDROP, LOGO }
 enum class CreditRole { CAST, DIRECTOR, WRITER }
-enum class StreamingService(val id: String) {
-    NETFLIX("netflix"),
-    PRIME("prime"),
-    DISNEY("disney"),
-    APPLE("apple"),
-    HBO("hbo"),
-    PEACOCK("peacock"),
-    HULU("hulu"),
-    PARAMOUNT("paramount");
-
-//    /**
-//     * Build the launch URL for this streaming service.
-//     *
-//     * @param externalId The provider-specific ID from ExternalIdEntity.providerId
-//     * @return The deep link URL for launching the title in the streaming service app.
-//     *         For Netflix, includes {userId} placeholder to be substituted by calling code.
-//     */
-//    fun buildLaunchUrl(externalId: String): String {
-//        return when (this) {
-//            NETFLIX -> {
-//                // {userId} is a placeholder for user-specific Netflix ID, to be substituted by calling code
-//                "https://www.netflix.com/watch/$externalId"
-//            }
-//            PRIME -> {
-//                // TODO: Verify Prime Video URL format and test deep linking
-//                "https://www.primevideo.com/detail/$externalId"
-//            }
-//            DISNEY -> {
-//                // TODO: Verify Disney+ URL format and test deep linking
-//                "https://www.disneyplus.com/video/$externalId"
-//            }
-//            HBO -> {
-//                // TODO: Verify HBO Max URL format and test deep linking
-//                "https://play.hbomax.com/page/$externalId"
-//            }
-//            PEACOCK -> {
-//                // TODO: Verify Peacock URL format and test deep linking
-//                "https://www.peacocktv.com/watch/playback/$externalId"
-//            }
-//            HULU -> {
-//                // TODO: Verify Hulu URL format and test deep linking
-//                "https://www.hulu.com/watch/$externalId"
-//            }
-//        }
-//    }
-
-    companion object {
-        fun fromString(id: String): StreamingService? {
-            return entries.find { it.id.equals(id, ignoreCase = true) }
-        }
-    }
-}
 enum class PopularityType { TOP_SHOWS }
 
 // ---- TITLES (movie or series root) ----

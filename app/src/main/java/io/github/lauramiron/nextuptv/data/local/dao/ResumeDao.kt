@@ -6,7 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import io.github.lauramiron.nextuptv.data.local.entity.ResumeEntryEntity
-import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
+import io.github.lauramiron.nextuptv.util.StreamingService
 import kotlinx.coroutines.flow.Flow
 
 @Dao

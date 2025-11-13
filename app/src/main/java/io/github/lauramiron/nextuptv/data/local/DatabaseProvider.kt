@@ -134,7 +134,7 @@ object DatabaseProvider {
             android.util.Log.d("DatabaseProvider", "Checked locations:")
             android.util.Log.d("DatabaseProvider", "  - Assets: $SNAPSHOT_FILENAME")
             android.util.Log.d("DatabaseProvider", "  - Snapshot dir: ${File(snapshotDir, SNAPSHOT_FILENAME).absolutePath}")
-            builder.fallbackToDestructiveMigration(false)
+            builder.fallbackToDestructiveMigration()
         }
 
         android.util.Log.d("DatabaseProvider", "Building database...")

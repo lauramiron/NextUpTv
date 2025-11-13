@@ -1,7 +1,7 @@
 package io.github.lauramiron.nextuptv.data.mappers
 
 import io.github.lauramiron.nextuptv.data.local.entity.ResumeEntryEntity
-import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
+import io.github.lauramiron.nextuptv.util.StreamingService
 import io.github.lauramiron.nextuptv.data.remote.resume.ResumeDataDto
 
 /**

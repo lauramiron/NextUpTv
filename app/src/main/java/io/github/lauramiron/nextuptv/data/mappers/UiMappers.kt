@@ -7,7 +7,8 @@ import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import io.github.lauramiron.nextuptv.data.local.dao.ResumeWithTitleRow
-import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
+import io.github.lauramiron.nextuptv.util.StreamingService
+import io.github.lauramiron.nextuptv.util.tvAppPackage
 import io.github.lauramiron.nextuptv.data.local.entity.TitleEntity
 import io.github.lauramiron.nextuptv.data.local.entity.TitleWithExternalId
 import io.github.lauramiron.nextuptv.ui.details.MovieItem
@@ -97,7 +98,7 @@ private fun parseImageSet(jsonString: String?): Map<String, Map<String, String>>
  */
 fun ResumeWithTitleRow.toResumeItem(context: Context): ResumeItem? {
     // Get the package name for the streaming service
-    val packageName = getServicePackageName(entry.serviceId) ?: return null
+    val packageName = entry.serviceId.tvAppPackage ?: return null
 
     // Build the deep link intent
     val deepLink = externalLink?.let { url ->
@@ -130,24 +131,4 @@ fun ResumeWithTitleRow.toResumeItem(context: Context): ResumeItem? {
         appBadge = null, // TODO: Load app badge
         deepLink = deepLink
     )
-}
-
-/**
- * Get the package name for a streaming service's TV app
- */
-private fun getServicePackageName(service: StreamingService): String? {
-    return when (service) {
-        StreamingService.NETFLIX -> "com.netflix.ninja"     // confirmed
-//        StreamingService.APPLE -> "com.apple.atv.plus"      // doesn't work
-        StreamingService.APPLE -> "com.apple.atve.androidtv.appletv"
-//        StreamingService.PRIME -> "com.amazon.avod.thirdpartyclient"    // doesn't work
-        StreamingService.PRIME -> "com.amazon.amazonvideo.livingroom.nvidia"
-//        StreamingService.PRIME -> "com.amazon.amazonvideo.livingroom"
-        StreamingService.DISNEY -> "com.disney.disneyplus" // in installed app list
-        StreamingService.HBO -> "com.hbo.hbonow"
-//        StreamingService.HULU -> "com.hulu.plus"
-        StreamingService.HULU -> "com.hulu.livingroomplus"
-        StreamingService.PEACOCK -> "com.peacocktv.peacockandroid"
-        StreamingService.PARAMOUNT -> "com.cbs.ca"
-    }
 }

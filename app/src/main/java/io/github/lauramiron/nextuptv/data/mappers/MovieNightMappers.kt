@@ -5,7 +5,7 @@ import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import io.github.lauramiron.nextuptv.data.local.entity.CreditRole
 import io.github.lauramiron.nextuptv.data.local.entity.ExternalIdEntity
 import io.github.lauramiron.nextuptv.data.local.entity.PersonEntity
-import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
+import io.github.lauramiron.nextuptv.util.StreamingService
 import io.github.lauramiron.nextuptv.data.local.entity.TitleEntity
 import io.github.lauramiron.nextuptv.data.local.entity.TitleKind
 import io.github.lauramiron.nextuptv.data.local.entity.TitlePersonCrossRef

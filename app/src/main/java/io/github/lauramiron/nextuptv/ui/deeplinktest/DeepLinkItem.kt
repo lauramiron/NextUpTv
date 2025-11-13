@@ -1,6 +1,6 @@
 package io.github.lauramiron.nextuptv.ui.deeplinktest
 
-import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
+import io.github.lauramiron.nextuptv.util.StreamingService
 
 /**
  * Represents a specific deeplink launch method to test.

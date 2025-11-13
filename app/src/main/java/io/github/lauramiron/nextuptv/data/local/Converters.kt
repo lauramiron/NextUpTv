@@ -3,7 +3,7 @@ package io.github.lauramiron.nextuptv.data.local
 import androidx.room.TypeConverter
 import io.github.lauramiron.nextuptv.data.local.entity.ArtworkType
 import io.github.lauramiron.nextuptv.data.local.entity.CreditRole
-import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
+import io.github.lauramiron.nextuptv.util.StreamingService
 import io.github.lauramiron.nextuptv.data.local.entity.SyncType
 import io.github.lauramiron.nextuptv.data.local.entity.TitleKind
 import java.text.SimpleDateFormat

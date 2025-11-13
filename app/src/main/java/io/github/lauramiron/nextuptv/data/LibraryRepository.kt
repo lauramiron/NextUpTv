@@ -9,7 +9,7 @@ import io.github.lauramiron.nextuptv.data.local.entity.CreditRole
 import io.github.lauramiron.nextuptv.data.local.entity.LibrarySyncMetadataEntity
 import io.github.lauramiron.nextuptv.data.local.entity.PersonEntity
 import io.github.lauramiron.nextuptv.data.local.entity.PopularityEntity
-import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
+import io.github.lauramiron.nextuptv.util.StreamingService
 import io.github.lauramiron.nextuptv.data.local.entity.SyncType
 import io.github.lauramiron.nextuptv.data.local.entity.TitleEntity
 import io.github.lauramiron.nextuptv.data.local.entity.TitleGenreCrossRef

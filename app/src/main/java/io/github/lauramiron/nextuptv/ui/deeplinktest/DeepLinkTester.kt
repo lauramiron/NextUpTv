@@ -7,23 +7,11 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.widget.Toast
 import android.util.Log
-import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
+import io.github.lauramiron.nextuptv.util.StreamingService
+import io.github.lauramiron.nextuptv.util.tvAppPackage
 
 object DeeplinkTester {
     private const val TAG = "DeeplinkTester"
-
-    // Package names for TV apps
-    private val PACKAGE_NAMES = mapOf(
-        StreamingService.NETFLIX to "com.netflix.ninja",
-//        StreamingService.APPLE to "com.apple.atv.plus",
-        StreamingService.APPLE to "com.apple.atve.android",
-        StreamingService.PRIME to "com.amazon.avod.thirdpartyclient",  // Android TV (most common)
-        // Alternative: "com.amazon.amazonvideo.livingroom" for Fire TV
-        StreamingService.DISNEY to "com.disney.disneyplus",
-        StreamingService.HBO to "com.hbo.hbonow",
-        StreamingService.HULU to "com.hulu.plus",
-        StreamingService.PEACOCK to "com.peacocktv.peacockandroid"
-    )
 
     /**
      * Launch a streaming service title using the specified method.
@@ -57,7 +45,7 @@ object DeeplinkTester {
      */
     private fun buildIntent(item: DeepLinkItem): Intent? {
         val url = buildUrl(item.service, item.externalId) ?: return null
-        val packageName = PACKAGE_NAMES[item.service]
+        val packageName = item.service.tvAppPackage
 
         return when (item.launchMethod) {
             LaunchMethod.HTTPS_WITH_PACKAGE -> {

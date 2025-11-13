@@ -1,7 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    id("kotlin-kapt")
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -17,12 +18,10 @@ android {
 
 //        buildConfigField("String", "RAPIDAPI_KEY", "\"YOUR_API_KEY_HERE\"")
         buildConfigField("String", "RAPIDAPI_KEY", "\"96da59657emsh4a212c55a8a0cdep152371jsnc0a31a8bc448\"")
+    }
 
-        javaCompileOptions {
-            annotationProcessorOptions {
-                arguments["room.schemaLocation"] = file("schemas").path
-            }
-        }
+    ksp {
+        arg("room.schemaLocation", "$projectDir/schemas")
     }
 
     buildFeatures {
@@ -51,14 +50,15 @@ android {
 
 dependencies {
     implementation(libs.androidx.junit.ktx)
-    kapt("androidx.room:room-compiler:2.8.2")
+    implementation(libs.kotlinx.serialization.json)
+    ksp("androidx.room:room-compiler:2.6.1")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.leanback)
     implementation(libs.glide)
     implementation(libs.kotlin.stdlib)
     implementation(libs.androidx.appcompat.resources)
     implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.room.common.jvm)
+    implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     implementation("com.squareup.retrofit2:retrofit:3.0.0")
     implementation("com.squareup.retrofit2:converter-moshi:3.0.0")

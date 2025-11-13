@@ -15,7 +15,7 @@ import androidx.work.workDataOf
 import com.google.common.util.concurrent.ListenableFuture
 import io.github.lauramiron.nextuptv.data.LibraryRepository
 import io.github.lauramiron.nextuptv.data.local.AppDb
-import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
+import io.github.lauramiron.nextuptv.util.StreamingService
 import io.github.lauramiron.nextuptv.data.remote.movienight.MovieNightApiFactory
 import io.github.lauramiron.nextuptv.sync.LibrarySyncWorker
 import kotlinx.coroutines.Dispatchers

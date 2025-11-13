@@ -2,6 +2,7 @@ package io.github.lauramiron.nextuptv.ui.resume
 
 import android.content.Intent
 import android.graphics.drawable.Drawable
+import java.io.Serializable
 
 data class ResumeItem(
     val title: String,                 // “Stranger Things”
