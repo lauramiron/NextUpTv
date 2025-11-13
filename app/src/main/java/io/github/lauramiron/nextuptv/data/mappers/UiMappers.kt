@@ -36,16 +36,23 @@ fun TitleEntity.toMovieItem(): MovieItem {
 /**
  * Convert TitleWithExternalId to MovieItem for UI display with service-specific launch URL.
  *
+ * Launch URL logic:
+ * 1. If link is not null, use it directly (original URL from API)
+ * 2. Otherwise, construct URL from externalId using buildLaunchUrl()
+ *
  * @param service The streaming service to build the launch URL for
- * @return MovieItem with videoUrl populated using the service's buildLaunchUrl() function
+ * @return MovieItem with videoUrl populated using the best available URL
  */
 fun TitleWithExternalId.toMovieItem(service: StreamingService): MovieItem {
     // Parse the imageSet JSON to extract card and background URLs
     val imageSet = parseImageSet(title.imageSetJson)
 
-    // Build the launch URL if we have an external ID
-    val videoUrl = externalId?.let { service.buildLaunchUrl(it) }
-
+//    // Build the launch URL - prefer stored link, fallback to constructed URL
+//    val videoUrl = when {
+//        !link.isNullOrBlank() -> link
+////        !externalId.isNullOrBlank() -> service.buildLaunchUrl(externalId)
+//        else -> null
+//    }
     return MovieItem(
         id = title.id,
         title = title.name,
@@ -54,7 +61,7 @@ fun TitleWithExternalId.toMovieItem(service: StreamingService): MovieItem {
             ?: imageSet?.get("verticalBackdrop")?.get("w720"),
         cardImageUrl = imageSet?.get("horizontalPoster")?.get("w360")
             ?: imageSet?.get("verticalPoster")?.get("w240"),
-        videoUrl = videoUrl,
+        videoUrl = link,
         studio = service.id.replaceFirstChar { it.uppercase() } // Use service name as studio
     )
 }
@@ -92,24 +99,24 @@ fun ResumeWithTitleRow.toResumeItem(context: Context): ResumeItem? {
     // Get the package name for the streaming service
     val packageName = getServicePackageName(entry.serviceId) ?: return null
 
-    // Determine the launch URL
-    val launchUrl = when {
-        // Prefer the stored link from external_ids table
-        !externalLink.isNullOrBlank() -> externalLink
-
-        // Fall back to constructing from serviceItemId in external_ids
-        !externalServiceItemId.isNullOrBlank() ->
-            entry.serviceId.buildLaunchUrl(externalServiceItemId)
-
-        // Last resort: use serviceItemId from resume entry
-        !entry.serviceItemId.isNullOrBlank() ->
-            entry.serviceId.buildLaunchUrl(entry.serviceItemId)
-
-        else -> null
-    }
+//    // Determine the launch URL
+//    val launchUrl = when {
+//        // Prefer the stored link from external_ids table
+//        !externalLink.isNullOrBlank() -> externalLink
+//
+//        // Fall back to constructing from serviceItemId in external_ids
+//        !externalServiceItemId.isNullOrBlank() ->
+//            entry.serviceId.buildLaunchUrl(externalServiceItemId)
+//
+//        // Last resort: use serviceItemId from resume entry
+//        !entry.serviceItemId.isNullOrBlank() ->
+//            entry.serviceId.buildLaunchUrl(entry.serviceItemId)
+//
+//        else -> null
+//    }
 
     // Build the deep link intent
-    val deepLink = launchUrl?.let { url ->
+    val deepLink = externalLink?.let { url ->
         Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
             setPackage(packageName)
             addCategory(Intent.CATEGORY_BROWSABLE)

@@ -1,5 +1,6 @@
 package io.github.lauramiron.nextuptv.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -20,46 +21,41 @@ enum class StreamingService(val id: String) {
     PEACOCK("peacock"),
     HULU("hulu");
 
-    /**
-     * Build the launch URL for this streaming service.
-     *
-     * @param externalId The provider-specific ID from ExternalIdEntity.providerId
-     * @return The deep link URL for launching the title in the streaming service app.
-     *         For Netflix, includes {userId} placeholder to be substituted by calling code.
-     */
-    fun buildLaunchUrl(externalId: String): String {
-        return when (this) {
-            NETFLIX -> {
-                // {userId} is a placeholder for user-specific Netflix ID, to be substituted by calling code
-                "https://www.netflix.com/watch/$externalId"
-            }
-            PRIME -> {
-                // TODO: Verify Prime Video URL format and test deep linking
-                "https://www.primevideo.com/detail/$externalId"
-            }
-            DISNEY -> {
-                // TODO: Verify Disney+ URL format and test deep linking
-                "https://www.disneyplus.com/video/$externalId"
-            }
-            APPLE -> {
-                // TODO: Verify Apple TV+ URL format and test deep linking
-                // May need to differentiate between movies and series
-                "https://tv.apple.com/us/movie/$externalId"
-            }
-            HBO -> {
-                // TODO: Verify HBO Max URL format and test deep linking
-                "https://play.hbomax.com/page/$externalId"
-            }
-            PEACOCK -> {
-                // TODO: Verify Peacock URL format and test deep linking
-                "https://www.peacocktv.com/watch/playback/$externalId"
-            }
-            HULU -> {
-                // TODO: Verify Hulu URL format and test deep linking
-                "https://www.hulu.com/watch/$externalId"
-            }
-        }
-    }
+//    /**
+//     * Build the launch URL for this streaming service.
+//     *
+//     * @param externalId The provider-specific ID from ExternalIdEntity.providerId
+//     * @return The deep link URL for launching the title in the streaming service app.
+//     *         For Netflix, includes {userId} placeholder to be substituted by calling code.
+//     */
+//    fun buildLaunchUrl(externalId: String): String {
+//        return when (this) {
+//            NETFLIX -> {
+//                // {userId} is a placeholder for user-specific Netflix ID, to be substituted by calling code
+//                "https://www.netflix.com/watch/$externalId"
+//            }
+//            PRIME -> {
+//                // TODO: Verify Prime Video URL format and test deep linking
+//                "https://www.primevideo.com/detail/$externalId"
+//            }
+//            DISNEY -> {
+//                // TODO: Verify Disney+ URL format and test deep linking
+//                "https://www.disneyplus.com/video/$externalId"
+//            }
+//            HBO -> {
+//                // TODO: Verify HBO Max URL format and test deep linking
+//                "https://play.hbomax.com/page/$externalId"
+//            }
+//            PEACOCK -> {
+//                // TODO: Verify Peacock URL format and test deep linking
+//                "https://www.peacocktv.com/watch/playback/$externalId"
+//            }
+//            HULU -> {
+//                // TODO: Verify Hulu URL format and test deep linking
+//                "https://www.hulu.com/watch/$externalId"
+//            }
+//        }
+//    }
 
     companion object {
         fun fromString(id: String): StreamingService? {
@@ -184,7 +180,9 @@ data class ExternalIdEntity(
     val serviceItemId: String,         // service-specific ID for this item
     val available: Boolean,
     val price: Short,
-    val link: String? = null           // Original URL from API (showLink or videoLink)
+    val link: String? = null,          // Original URL from API (showLink or videoLink)
+    @ColumnInfo(typeAffinity = ColumnInfo.TEXT)
+    val updatedAt: Date = Date()       // ISO 8601 timestamp in US/Pacific timezone stored as TEXT
 )
 
 @Entity(
@@ -212,5 +210,6 @@ data class PopularityEntity(
  */
 data class TitleWithExternalId(
     @Embedded val title: TitleEntity,
-    val externalId: String?  // providerId from external_ids table, null if no external ID exists
+    val externalId: String?,  // serviceItemId from external_ids table, null if no external ID exists
+    val link: String?         // Original link from external_ids table (preferred for launch URLs)
 )

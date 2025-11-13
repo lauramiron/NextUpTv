@@ -6,9 +6,20 @@ import io.github.lauramiron.nextuptv.data.local.entity.CreditRole
 import io.github.lauramiron.nextuptv.data.local.entity.StreamingService
 import io.github.lauramiron.nextuptv.data.local.entity.SyncType
 import io.github.lauramiron.nextuptv.data.local.entity.TitleKind
+import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
 class Converters {
+    companion object {
+        // ISO 8601 formatter with timezone offset for US/Pacific
+        // Format: 2025-01-15T14:30:45.123-08:00 (PST) or 2025-06-15T14:30:45.123-07:00 (PDT)
+        private val isoFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.US).apply {
+            timeZone = TimeZone.getTimeZone("America/Los_Angeles")
+        }
+    }
+
     @TypeConverter
     fun fromTitleKind(v: TitleKind) = v.name
     @TypeConverter fun toTitleKind(s: String) = TitleKind.valueOf(s)
@@ -40,5 +51,22 @@ class Converters {
     @TypeConverter
     fun dateToTimestamp(date: Date?): Long? {
         return date?.time
+    }
+
+    // ISO 8601 format converters for human-readable timestamps in database
+    @TypeConverter
+    fun fromIsoDate(value: String?): Date? {
+        return value?.let {
+            try {
+                isoFormatter.parse(it)
+            } catch (e: Exception) {
+                null
+            }
+        }
+    }
+
+    @TypeConverter
+    fun dateToIsoString(date: Date?): String? {
+        return date?.let { isoFormatter.format(it) }
     }
 }

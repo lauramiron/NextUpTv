@@ -83,14 +83,17 @@ class LibraryRepository(
         startCursor: String? = null,
         maxPages: Int = -1
     ): SyncReport {
-        val services = catalogs.split(",").map { it.trim() }
-        val servicesJson = stringListAdapter.toJson(services)
+        val servicesList = catalogs.split(",").map { it.trim() }
+        val servicesJson = stringListAdapter.toJson(servicesList)
+
+        // Determine sync type based on maxPages parameter
+        val syncType = if (maxPages == -1) SyncType.FULL else SyncType.PARTIAL
 
         val syncMetadata = LibrarySyncMetadataEntity(
-            timestamp = Date(),
-            syncType = SyncType.FULL,
+            updatedAt = Date(),
+            syncType = syncType,
             success = false,
-            servicesJson = servicesJson,
+            services = servicesJson,
             metadataJson = null,
             nextCursor = startCursor
         )
@@ -100,27 +103,37 @@ class LibraryRepository(
         return try {
             val report = performSync(catalogs, startCursor, maxPages)
 
-            // Update metadata with success
+            // Determine if this was a partial sync or a complete full sync
+            // - If maxPages != -1, it's always a partial sync (save cursor for resumption)
+            // - If maxPages == -1 but lastCursor != null, there are more pages (save cursor)
+            // - Only clear cursor if maxPages == -1 AND lastCursor == null (true full sync completed)
+            val isPartialSync = maxPages != -1 || report.lastCursor != null
+            val cursorToSave = if (isPartialSync) report.lastCursor else null
+
+            // Update the existing metadata record with success results
             val reportJson = moshi.adapter(SyncReport::class.java).toJson(report)
-            db.librarySyncMetadataDao().insert(
+            db.librarySyncMetadataDao().update(
                 syncMetadata.copy(
-                    id = 0, // Insert new record for successful completion
+                    id = metadataId.toInt(),
+                    updatedAt = Date(),     // Update timestamp to completion time
                     success = true,
                     metadataJson = reportJson,
-                    nextCursor = null // Cleared on success
+                    nextCursor = cursorToSave  // Save cursor for partial syncs, null for complete syncs
                 )
             )
 
             report
         } catch (e: Exception) {
-            // Update metadata with failure and last cursor
+            // Update the existing metadata record with failure results
+            // Save any partial progress cursor for potential resumption
             val partialReportJson = moshi.adapter(SyncReport::class.java).toJson(SyncReport())
-            db.librarySyncMetadataDao().insert(
+            db.librarySyncMetadataDao().update(
                 syncMetadata.copy(
-                    id = 0, // Insert new record for failure
+                    id = metadataId.toInt(),
+                    updatedAt = Date(),     // Update timestamp to failure time
                     success = false,
                     metadataJson = partialReportJson,
-                    nextCursor = null // Could capture last successful cursor here if needed
+                    nextCursor = startCursor  // Keep the cursor we started with for retry
                 )
             )
             throw e

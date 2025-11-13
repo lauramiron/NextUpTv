@@ -58,14 +58,43 @@ class LibrarySyncCliTest {
     }
 
     /**
-     * Helper function to run a full sync for any streaming service.
+     * Helper function to run a sync for any streaming service with optional page limit.
      * This is NOT a real test - it's a CLI wrapper.
      * It will always "pass" even if sync encounters errors.
+     *
+     * @param service The streaming service to sync
+     * @param maxPages Maximum number of pages to sync, or -1 for full sync (default)
+     * @param resume If true, attempts to resume from the last sync's cursor; if false, starts from beginning (default)
      */
-    private suspend fun runFullSyncForService(service: StreamingService) {
+    private suspend fun runSyncForService(service: StreamingService, maxPages: Int = -1, resume: Boolean = false) {
         val serviceName = service.id.uppercase()
-        println("=== Full $serviceName Sync (No Timeout) ===")
-        println("This will take several minutes. Be patient!")
+        val syncType = if (maxPages == -1) "Full" else "Partial (First $maxPages pages)"
+
+        // Determine starting cursor based on resume parameter
+        val startCursor = if (resume) {
+            val lastSync = db.librarySyncMetadataDao().getLastSyncForService(service.id)
+            when {
+                lastSync == null -> {
+                    println("No previous sync found for $serviceName. Starting from beginning.")
+                    null
+                }
+                lastSync.success && lastSync.nextCursor == null -> {
+                    println("Last sync for $serviceName completed fully. Restarting from beginning.")
+                    null
+                }
+                else -> {
+                    println("Resuming $serviceName sync from cursor: ${lastSync.nextCursor}")
+                    lastSync.nextCursor
+                }
+            }
+        } else {
+            null
+        }
+
+        println("=== $syncType $serviceName Sync ${if (resume && startCursor != null) "(Resuming)" else ""} ===")
+        if (maxPages == -1 && startCursor == null) {
+            println("This will take several minutes. Be patient!")
+        }
         println()
 
         val startTime = System.currentTimeMillis()
@@ -76,9 +105,9 @@ class LibrarySyncCliTest {
             println("Initial title count: $initialCount")
             println()
 
-            // Run the sync with no page limit
+            // Run the sync with optional page limit and cursor
             println("Starting sync...")
-            val report = repository.syncAll(catalogs = service.id)
+            val report = repository.syncAll(catalogs = service.id, startCursor = startCursor, maxPages = maxPages)
 
             // Print results
             val finalCount = db.titleDao().countAll()
@@ -120,7 +149,7 @@ class LibrarySyncCliTest {
      */
     @Test
     fun runFullNetflixSync() = runBlocking {
-        runFullSyncForService(StreamingService.NETFLIX)
+        runSyncForService(StreamingService.NETFLIX)
     }
 
     /**
@@ -131,7 +160,7 @@ class LibrarySyncCliTest {
      */
     @Test
     fun runFullAppleSync() = runBlocking {
-        runFullSyncForService(StreamingService.APPLE)
+        runSyncForService(StreamingService.APPLE)
     }
 
     /**
@@ -142,7 +171,7 @@ class LibrarySyncCliTest {
      */
     @Test
     fun runFullHboSync() = runBlocking {
-        runFullSyncForService(StreamingService.HBO)
+        runSyncForService(StreamingService.HBO)
     }
 
     /**
@@ -153,108 +182,25 @@ class LibrarySyncCliTest {
      */
     @Test
     fun runFullPrimeSync() = runBlocking {
-        runFullSyncForService(StreamingService.PRIME)
+        runSyncForService(StreamingService.PRIME)
     }
 
     /**
-     * Same as above but limits to a specific number of pages.
+     * Partial Netflix sync - limits to a specific number of pages.
      * Useful for testing without waiting for the full sync.
      */
     @Test
     fun runPartialNetflixSync() = runBlocking {
-        val maxPages = 5
-        println("=== Partial Netflix Sync (First $maxPages pages) ===")
-        println()
-
-        val startTime = System.currentTimeMillis()
-
-        try {
-            val initialCount = db.titleDao().countAll()
-            println("Initial title count: $initialCount")
-            println()
-
-            println("Starting sync...")
-            val report = repository.syncAll(catalogs = "netflix", maxPages = maxPages)
-
-            val finalCount = db.titleDao().countAll()
-            val elapsed = (System.currentTimeMillis() - startTime) / 1000.0
-
-            println()
-            println("=== Sync Complete ===")
-            println("Time elapsed: ${elapsed}s")
-            println()
-            println("=== Sync Report ===")
-            println("Pages processed: ${report.pages}")
-            println("Titles upserted: ${report.titlesUpserted}")
-            println("External IDs upserted: ${report.externalIdsUpserted}")
-            println("Genres upserted: ${report.genresUpserted}")
-            println("People upserted: ${report.peopleUpserted}")
-            println("Title-Genre refs: ${report.titleGenreRefs}")
-            println("Title-Person refs: ${report.titlePersonRefs}")
-            println()
-            println("Database title count: $initialCount -> $finalCount (+${finalCount - initialCount})")
-            println()
-            println("SUCCESS!")
-
-        } catch (e: Exception) {
-            val elapsed = (System.currentTimeMillis() - startTime) / 1000.0
-            println()
-            println("=== Sync Failed ===")
-            println("Time elapsed: ${elapsed}s")
-            println("Error: ${e.message}")
-            e.printStackTrace()
-        }
+        runSyncForService(StreamingService.NETFLIX, maxPages = 5)
     }
 
-
     /**
-     * Same as above but limits to a specific number of pages.
+     * Partial Apple sync - limits to a specific number of pages.
      * Useful for testing without waiting for the full sync.
      */
     @Test
     fun runPartialAppleSync() = runBlocking {
-        val maxPages = 1
-        println("=== Partial Apple Sync (First $maxPages pages) ===")
-        println()
-
-        val startTime = System.currentTimeMillis()
-
-        try {
-            val initialCount = db.titleDao().countAll()
-            println("Initial title count: $initialCount")
-            println()
-
-            println("Starting sync...")
-            val report = repository.syncAll(catalogs = "apple", maxPages = maxPages)
-
-            val finalCount = db.titleDao().countAll()
-            val elapsed = (System.currentTimeMillis() - startTime) / 1000.0
-
-            println()
-            println("=== Sync Complete ===")
-            println("Time elapsed: ${elapsed}s")
-            println()
-            println("=== Sync Report ===")
-            println("Pages processed: ${report.pages}")
-            println("Titles upserted: ${report.titlesUpserted}")
-            println("External IDs upserted: ${report.externalIdsUpserted}")
-            println("Genres upserted: ${report.genresUpserted}")
-            println("People upserted: ${report.peopleUpserted}")
-            println("Title-Genre refs: ${report.titleGenreRefs}")
-            println("Title-Person refs: ${report.titlePersonRefs}")
-            println()
-            println("Database title count: $initialCount -> $finalCount (+${finalCount - initialCount})")
-            println()
-            println("SUCCESS!")
-
-        } catch (e: Exception) {
-            val elapsed = (System.currentTimeMillis() - startTime) / 1000.0
-            println()
-            println("=== Sync Failed ===")
-            println("Time elapsed: ${elapsed}s")
-            println("Error: ${e.message}")
-            e.printStackTrace()
-        }
+        runSyncForService(StreamingService.APPLE, maxPages = 5, resume = true)
     }
     /**
      * Syncs top shows for a single streaming service.

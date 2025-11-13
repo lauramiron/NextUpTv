@@ -84,8 +84,8 @@ interface ExternalIdDao {
 
     /**
      * Upsert all:
-     * - INSERT IGNORE first
-     * - For conflicts, look up existing ids and UPDATE with latest serviceItemId/available/price
+     * - INSERT IGNORE first (new rows get current timestamp via default)
+     * - For conflicts, look up existing ids and UPDATE with latest serviceItemId/available/price/link/updatedAt
      * Returns the number of rows processed.
      */
     @Transaction
@@ -94,14 +94,15 @@ interface ExternalIdDao {
 
         val results = insertIgnoreAll(items)
         val toUpdate = ArrayList<ExternalIdEntity>()
+        val currentTime = Date()
 
         results.forEachIndexed { i, rowId ->
             if (rowId == -1L) {
                 val e = items[i]
                 val id = findId(e.entityId, e.service)
                 if (id != null) {
-                    // carry over the PK and update the mutable columns
-                    toUpdate += e.copy(id = id)
+                    // carry over the PK and update the mutable columns including updatedAt
+                    toUpdate += e.copy(id = id, updatedAt = currentTime)
                 }
             }
         }
@@ -248,10 +249,10 @@ interface PopularityDao {
 
     /**
      * Get top shows for a service along with their external IDs for that service.
-     * Returns a map of titleId to externalId (serviceItemId from external_ids table).
+     * Returns title with both serviceItemId and original link from external_ids table.
      */
     @Query("""
-        SELECT t.*, e.serviceItemId as externalId
+        SELECT t.*, e.serviceItemId as externalId, e.link as link
         FROM titles t
         INNER JOIN title_popularities p ON t.id = p.titleId
         LEFT JOIN external_ids e ON t.id = e.entityId AND e.service = :service
