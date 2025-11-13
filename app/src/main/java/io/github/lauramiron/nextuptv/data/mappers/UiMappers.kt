@@ -99,22 +99,6 @@ fun ResumeWithTitleRow.toResumeItem(context: Context): ResumeItem? {
     // Get the package name for the streaming service
     val packageName = getServicePackageName(entry.serviceId) ?: return null
 
-//    // Determine the launch URL
-//    val launchUrl = when {
-//        // Prefer the stored link from external_ids table
-//        !externalLink.isNullOrBlank() -> externalLink
-//
-//        // Fall back to constructing from serviceItemId in external_ids
-//        !externalServiceItemId.isNullOrBlank() ->
-//            entry.serviceId.buildLaunchUrl(externalServiceItemId)
-//
-//        // Last resort: use serviceItemId from resume entry
-//        !entry.serviceItemId.isNullOrBlank() ->
-//            entry.serviceId.buildLaunchUrl(entry.serviceItemId)
-//
-//        else -> null
-//    }
-
     // Build the deep link intent
     val deepLink = externalLink?.let { url ->
         Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
@@ -153,12 +137,17 @@ fun ResumeWithTitleRow.toResumeItem(context: Context): ResumeItem? {
  */
 private fun getServicePackageName(service: StreamingService): String? {
     return when (service) {
-        StreamingService.NETFLIX -> "com.netflix.ninja"
-        StreamingService.APPLE -> "com.apple.atv.plus"
-        StreamingService.PRIME -> "com.amazon.avod.thirdpartyclient"
-        StreamingService.DISNEY -> "com.disney.disneyplus"
+        StreamingService.NETFLIX -> "com.netflix.ninja"     // confirmed
+//        StreamingService.APPLE -> "com.apple.atv.plus"      // doesn't work
+        StreamingService.APPLE -> "com.apple.atve.androidtv.appletv"
+//        StreamingService.PRIME -> "com.amazon.avod.thirdpartyclient"    // doesn't work
+        StreamingService.PRIME -> "com.amazon.amazonvideo.livingroom.nvidia"
+//        StreamingService.PRIME -> "com.amazon.amazonvideo.livingroom"
+        StreamingService.DISNEY -> "com.disney.disneyplus" // in installed app list
         StreamingService.HBO -> "com.hbo.hbonow"
-        StreamingService.HULU -> "com.hulu.plus"
+//        StreamingService.HULU -> "com.hulu.plus"
+        StreamingService.HULU -> "com.hulu.livingroomplus"
         StreamingService.PEACOCK -> "com.peacocktv.peacockandroid"
+        StreamingService.PARAMOUNT -> "com.cbs.ca"
     }
 }

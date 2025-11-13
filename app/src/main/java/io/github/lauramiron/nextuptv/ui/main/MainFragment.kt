@@ -132,6 +132,13 @@ class MainFragment : BrowseSupportFragment() {
                 launchMethod = LaunchMethod.HTTPS_NO_PACKAGE
             ),
             DeepLinkItem(
+                methodName = "HTTPS Package and Source",
+                service = service,
+                externalId = externalId,
+                titleName = titleName,
+                launchMethod = LaunchMethod.CUSTOM_SCHEME
+            ),
+            DeepLinkItem(
                 methodName = "Custom Scheme",
                 service = service,
                 externalId = externalId,
@@ -231,6 +238,30 @@ class MainFragment : BrowseSupportFragment() {
             titleName = "Severance",
             externalId = "umc.cmc.1srk2goyh2q2zdxcx605w8vtx",
             headerId = 2001L
+        )
+
+        addDeepLinkTestRow(
+            rowsAdapter = rowsAdapter,
+            service = StreamingService.PRIME,
+            titleName = "Gen V",
+            externalId = "B0F895NN1Q",
+            headerId = 2002L
+        )
+
+        addDeepLinkTestRow(
+            rowsAdapter = rowsAdapter,
+            service = StreamingService.HBO,
+            titleName = "The Substance",
+            externalId = "90b483f4-ffd1-4cc1-a5e7-4112f6d61c15",
+            headerId = 2003L
+        )
+
+        addDeepLinkTestRow(
+            rowsAdapter = rowsAdapter,
+            service = StreamingService.PARAMOUNT,
+            titleName = "South Park",
+            externalId = "",
+            headerId = 2004L
         )
 
         adapter = rowsAdapter

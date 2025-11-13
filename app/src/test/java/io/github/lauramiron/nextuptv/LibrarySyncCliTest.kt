@@ -182,7 +182,7 @@ class LibrarySyncCliTest {
      */
     @Test
     fun runFullPrimeSync() = runBlocking {
-        runSyncForService(StreamingService.PRIME)
+        runSyncForService(StreamingService.PRIME, resume = true)
     }
 
     /**
@@ -203,6 +203,30 @@ class LibrarySyncCliTest {
         runSyncForService(StreamingService.APPLE, maxPages = 5, resume = true)
     }
     /**
+     * Partial Prime sync - limits to a specific number of pages.
+     * Useful for testing without waiting for the full sync.
+     */
+    @Test
+    fun runPartialPrimeSync() = runBlocking {
+        runSyncForService(StreamingService.PRIME, maxPages = 400, resume = true)
+    }
+    /**
+     * Partial hulu sync - limits to a specific number of pages.
+     * Useful for testing without waiting for the full sync.
+     */
+    @Test
+    fun runPartialHuluSync() = runBlocking {
+        runSyncForService(StreamingService.HBO, maxPages = 1, resume = false)
+    }
+    /**
+     * Partial Hbo sync - limits to a specific number of pages.
+     * Useful for testing without waiting for the full sync.
+     */
+    @Test
+    fun runPartialHboSync() = runBlocking {
+        runSyncForService(StreamingService.HBO, maxPages = 30, resume = true)
+    }
+    /**
      * Syncs top shows for a single streaming service.
      * This will fetch the top shows list and upsert all titles with their metadata.
      *
@@ -211,7 +235,7 @@ class LibrarySyncCliTest {
      */
     @Test
     fun syncTopShowsForOneService() = runBlocking {
-        val service = StreamingService.APPLE
+        val service = StreamingService.HBO
         println("=== Sync Top Shows for ${service.id.uppercase()} ===")
         println()
 

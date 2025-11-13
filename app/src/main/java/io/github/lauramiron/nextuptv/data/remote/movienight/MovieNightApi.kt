@@ -15,6 +15,7 @@ interface MovieNightApiService {
     suspend fun searchShows(
         @Header("X-RapidAPI-Key") apiKey: String,
         @Query("country") country: String = "us",
+//        @Query("order_by") orderBy: String = "popularity_1year",
         @Query("catalogs") catalogs: String,
         @Query("cursor") cursor: String? = null
     ): ShowSearchResponseDto

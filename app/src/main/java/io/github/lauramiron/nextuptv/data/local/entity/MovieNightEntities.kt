@@ -19,7 +19,8 @@ enum class StreamingService(val id: String) {
     APPLE("apple"),
     HBO("hbo"),
     PEACOCK("peacock"),
-    HULU("hulu");
+    HULU("hulu"),
+    PARAMOUNT("paramount");
 
 //    /**
 //     * Build the launch URL for this streaming service.

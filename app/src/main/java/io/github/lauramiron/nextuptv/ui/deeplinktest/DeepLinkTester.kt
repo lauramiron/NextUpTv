@@ -15,8 +15,10 @@ object DeeplinkTester {
     // Package names for TV apps
     private val PACKAGE_NAMES = mapOf(
         StreamingService.NETFLIX to "com.netflix.ninja",
-        StreamingService.APPLE to "com.apple.atv.plus",
-        StreamingService.PRIME to "com.amazon.avod.thirdpartyclient",
+//        StreamingService.APPLE to "com.apple.atv.plus",
+        StreamingService.APPLE to "com.apple.atve.android",
+        StreamingService.PRIME to "com.amazon.avod.thirdpartyclient",  // Android TV (most common)
+        // Alternative: "com.amazon.amazonvideo.livingroom" for Fire TV
         StreamingService.DISNEY to "com.disney.disneyplus",
         StreamingService.HBO to "com.hbo.hbonow",
         StreamingService.HULU to "com.hulu.plus",
@@ -71,18 +73,20 @@ object DeeplinkTester {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
             }
-            LaunchMethod.CUSTOM_SCHEME -> {
+            LaunchMethod.HTTPS_WITH_PACKAGE_AND_SOURCE -> {
                 Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
                     packageName?.let { setPackage(it) }
                     addCategory(Intent.CATEGORY_BROWSABLE)
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    putExtra("source","30")
+                    putExtra("source", "30")
                 }
-//                val customUrl = buildCustomSchemeUrl(item.service, item.externalId) ?: return null
-//                Intent(Intent.ACTION_VIEW, Uri.parse(customUrl)).apply {
-//                    packageName?.let { setPackage(it) }
-//                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-//                }
+            }
+            LaunchMethod.CUSTOM_SCHEME -> {
+                val customUrl = buildCustomSchemeUrl(item.service, item.externalId) ?: return null
+                Intent(Intent.ACTION_VIEW, Uri.parse(customUrl)).apply {
+                    packageName?.let { setPackage(it) }
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
             }
             LaunchMethod.WEB_FALLBACK -> {
                 Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
@@ -101,11 +105,14 @@ object DeeplinkTester {
             StreamingService.NETFLIX -> "https://www.netflix.com/watch/80077368"
             StreamingService.APPLE -> "https://tv.apple.com/us/show/severance/umc.cmc.1srk2goyh2q2zdxcx605w8vtx"
 //            "https://tv.apple.com/us/episode/woes-hollow/umc.cmc.39o64vs9jfwkrt6zr653oe0dx?showId=umc.cmc.1srk2goyh2q2zdxcx605w8vtx"
-            StreamingService.PRIME -> "https://www.primevideo.com/detail/$externalId"
+//            StreamingService.PRIME -> "https://www.amazon.com/gp/video/detail/$externalId"
+            StreamingService.PRIME -> "https://app.primevideo.com/detail?gti=$externalId"
             StreamingService.DISNEY -> "https://www.disneyplus.com/video/$externalId"
-            StreamingService.HBO -> "https://play.hbomax.com/page/$externalId"
+            StreamingService.HBO -> "https://play.hbomax.com/movie/$externalId"
             StreamingService.HULU -> "https://www.hulu.com/watch/$externalId"
             StreamingService.PEACOCK -> "https://www.peacocktv.com/watch/playback/$externalId"
+            StreamingService.PARAMOUNT -> "https://www.paramountplus.com/shows/south-park/"
+//            StreamingService.PARAMOUNT -> "https://www.paramountplus.com/shows/video/mn0Gn546vjX_pqNaKKCUNpXOjuMvCWdj/"
         }
     }
 

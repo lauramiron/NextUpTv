@@ -19,14 +19,31 @@ object MovieNightApiFactory {
             .build()
 
         val clientBuilder = OkHttpClient.Builder()
-            .connectTimeout(20, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(120, TimeUnit.SECONDS)  // Increased for large responses (HBO, etc.)
             .writeTimeout(30, TimeUnit.SECONDS)
 
         if (debugLogs) {
+            // Add custom interceptor to log response size
+            clientBuilder.addInterceptor { chain ->
+                val request = chain.request()
+                val response = chain.proceed(request)
+                val responseBody = response.body
+                val bodyString = responseBody?.string() ?: ""
+
+                println("Response size: ${bodyString.length} bytes")
+                println("Response preview (first 500 chars): ${bodyString.take(500)}")
+                println("Response end (last 200 chars): ${bodyString.takeLast(200)}")
+
+                // Recreate response with the body we just read
+                response.newBuilder()
+                    .body(okhttp3.ResponseBody.create(responseBody?.contentType(), bodyString))
+                    .build()
+            }
+
             clientBuilder.addInterceptor(
                 HttpLoggingInterceptor().apply {
-                    level = HttpLoggingInterceptor.Level.BASIC
+                    level = HttpLoggingInterceptor.Level.HEADERS
                 }
             )
         }

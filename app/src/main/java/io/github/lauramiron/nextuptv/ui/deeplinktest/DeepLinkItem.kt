@@ -17,6 +17,8 @@ data class DeepLinkItem(
 enum class LaunchMethod {
     HTTPS_WITH_PACKAGE,    // ACTION_VIEW with https URL and explicit package
     HTTPS_NO_PACKAGE,      // ACTION_VIEW with https URL, let system choose
+
+    HTTPS_WITH_PACKAGE_AND_SOURCE,
     CUSTOM_SCHEME,         // Custom URL scheme (e.g., netflix://title/12345)
     WEB_FALLBACK          // Browser fallback if app not installed
 }
