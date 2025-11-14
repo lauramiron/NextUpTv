@@ -73,15 +73,18 @@ private fun parsePrimeId(url: String?): String? =
 private fun parseHboId(url: String?): String? =
     url?.let { u -> Regex("""/(movie|show)/([^/]+)""").find(u)?.groupValues?.getOrNull(2) }
 
-// Pulls “/title/########/” from a US netflix link, if present
-private fun TitleDto.extractUsNetflixTitleId(): String? {
-    val country = "us"
-    val list = this.streamingOptions?.get(country) ?: return null
-    val firstNetflix = list.firstOrNull { it.service.id.equals("netflix", ignoreCase = true) }
-        ?: return null
-    val link = firstNetflix.link ?: firstNetflix.videoLink ?: return null
-    return parseNetflixId(link)
-}
+private fun parseParamoutId(url: String?): String? =
+    url?.let { u -> Regex("""/(movies/video|shows)/([^/]+)""").find(u)?.groupValues?.getOrNull(2) }
+
+//// Pulls “/title/########/” from a US netflix link, if present
+//private fun TitleDto.extractUsNetflixTitleId(): String? {
+//    val country = "us"
+//    val list = this.streamingOptions?.get(country) ?: return null
+//    val firstNetflix = list.firstOrNull { it.service.id.equals("netflix", ignoreCase = true) }
+//        ?: return null
+//    val link = firstNetflix.link ?: firstNetflix.videoLink ?: return null
+//    return parseNetflixId(link)
+//}
 
 // --- Genres ---
 
@@ -163,7 +166,7 @@ fun TitleDto.toTitlePersonRefs(
 private fun TitleDto.isSeries(): Boolean =
     this.showType.equals("series", true)
 
-fun StreamingOptionDto.toExternalIdEntity(titleId: Long): ExternalIdEntity? {
+fun StreamingOptionDto.toExternalIdEntity(titleId: Long, imdbId: String? = null): ExternalIdEntity? {
     val serviceString = service.id.lowercase()
     val streamingService = StreamingService.fromString(serviceString) ?: return null // skip unsupported services
 
@@ -172,6 +175,7 @@ fun StreamingOptionDto.toExternalIdEntity(titleId: Long): ExternalIdEntity? {
         StreamingService.APPLE -> parseAppleId(link?: videoLink) ?: "unknown"
         StreamingService.PRIME -> parsePrimeId(link?: videoLink) ?: "unknown"
         StreamingService.HBO -> parseHboId(link ?: videoLink) ?: "unknown"
+        StreamingService.PARAMOUNT -> parseParamoutId(link ?: videoLink) ?: "unknown"
         else -> link ?: videoLink ?: "unknown"// add cases for disney/hulu/peacock/etc later
     }
 
@@ -181,7 +185,8 @@ fun StreamingOptionDto.toExternalIdEntity(titleId: Long): ExternalIdEntity? {
         entityId = titleId,
         available = true,
         price = 0,
-        link = link ?: videoLink
+        link = link ?: videoLink,
+        imdbId = imdbId
 //        price = price.toShortAmountOrNull()
     )
 }

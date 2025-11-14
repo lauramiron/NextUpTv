@@ -105,3 +105,14 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
         database.execSQL("ALTER TABLE library_sync_metadata_new RENAME TO library_sync_metadata")
     }
 }
+
+/**
+ * Migration from version 8 to 9:
+ * - Add 'imdbId' TEXT column to external_ids table
+ */
+val MIGRATION_8_9 = object : Migration(8, 9) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        // Add imdbId column to external_ids table (non-destructive)
+        database.execSQL("ALTER TABLE external_ids ADD COLUMN imdbId TEXT")
+    }
+}

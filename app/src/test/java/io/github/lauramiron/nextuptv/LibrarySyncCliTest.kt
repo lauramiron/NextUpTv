@@ -216,7 +216,7 @@ class LibrarySyncCliTest {
      */
     @Test
     fun runPartialHuluSync() = runBlocking {
-        runSyncForService(StreamingService.HBO, maxPages = 1, resume = false)
+        runSyncForService(StreamingService.HULU, maxPages = 1, resume = false)
     }
     /**
      * Partial Hbo sync - limits to a specific number of pages.
@@ -224,7 +224,15 @@ class LibrarySyncCliTest {
      */
     @Test
     fun runPartialHboSync() = runBlocking {
-        runSyncForService(StreamingService.HBO, maxPages = 30, resume = true)
+        runSyncForService(StreamingService.HBO, maxPages = 3, resume = false)
+    }
+    /**
+     * Partial Hbo sync - limits to a specific number of pages.
+     * Useful for testing without waiting for the full sync.
+     */
+    @Test
+    fun runPartialParamountSync() = runBlocking {
+        runSyncForService(StreamingService.PARAMOUNT, maxPages = 100, resume = true)
     }
     /**
      * Syncs top shows for a single streaming service.

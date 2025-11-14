@@ -6,6 +6,7 @@ import com.squareup.moshi.Types
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import io.github.lauramiron.nextuptv.data.local.AppDb
 import io.github.lauramiron.nextuptv.data.local.entity.CreditRole
+import io.github.lauramiron.nextuptv.data.local.entity.ExternalIdEntity
 import io.github.lauramiron.nextuptv.data.local.entity.LibrarySyncMetadataEntity
 import io.github.lauramiron.nextuptv.data.local.entity.PersonEntity
 import io.github.lauramiron.nextuptv.data.local.entity.PopularityEntity
@@ -86,6 +87,10 @@ class LibraryRepository(
         val servicesList = catalogs.split(",").map { it.trim() }
         val servicesJson = stringListAdapter.toJson(servicesList)
 
+        // Special handling for HBO: transform to Prime addon catalog for API
+        val isHboSync = catalogs.trim().equals("hbo", ignoreCase = true)
+        val apiCatalogs = if (isHboSync) "prime.addon.hbomaxus" else catalogs
+
         // Determine sync type based on maxPages parameter
         val syncType = if (maxPages == -1) SyncType.FULL else SyncType.PARTIAL
 
@@ -101,7 +106,7 @@ class LibraryRepository(
         val metadataId = db.librarySyncMetadataDao().insert(syncMetadata)
 
         return try {
-            val report = performSync(catalogs, startCursor, maxPages)
+            val report = performSync(apiCatalogs, startCursor, maxPages, isHboSync)
 
             // Determine if this was a partial sync or a complete full sync
             // - If maxPages != -1, it's always a partial sync (save cursor for resumption)
@@ -143,7 +148,8 @@ class LibraryRepository(
     private suspend fun performSync(
         catalogs: String,
         startCursor: String?,
-        maxPages: Int
+        maxPages: Int,
+        isHboSync: Boolean = false
     ): SyncReport {
         val report = SyncReport()
         var pagesProcessed = 0
@@ -158,7 +164,7 @@ class LibraryRepository(
             val pageReport = SyncReport()
 
             response.shows.forEach { titleDto ->
-                pageReport += upsertOneTitleTree(titleDto)
+                pageReport += upsertOneTitleTree(titleDto, isHboSync)
             }
 
             pagesProcessed++
@@ -179,7 +185,7 @@ class LibraryRepository(
      * Maps a TitleDto (and nested episodes/ids/credits/genres) to entities and upserts them.
      * Returns a report of what was inserted/updated.
      */
-    internal suspend fun upsertOneTitleTree(dto: TitleDto): SyncReport {
+    internal suspend fun upsertOneTitleTree(dto: TitleDto, isHboSync: Boolean = false): SyncReport {
         val report = SyncReport()
 
         // 1) Title
@@ -189,8 +195,24 @@ class LibraryRepository(
         report.titleIdsUpserted = longArrayOf(titleId).toList()
 
         // 2) External IDs
-        val streamingOptions: List<StreamingOptionDto> = dto.extractUsStreamingOptions()
-        val externalIdEntities = streamingOptions.mapNotNull { it.toExternalIdEntity(titleId) }
+        val externalIdEntities = if (isHboSync) {
+            // For HBO sync, ignore streaming options and create a single HBO external ID with "unknown" values
+            listOf(
+                ExternalIdEntity(
+                    service = StreamingService.HBO,
+                    serviceItemId = "unknown",
+                    entityId = titleId,
+                    available = true,
+                    price = 0,
+                    link = "unknown",
+                    imdbId = dto.imdbId
+                )
+            )
+        } else {
+            // Normal processing: extract streaming options and parse service-specific IDs
+            val streamingOptions: List<StreamingOptionDto> = dto.extractUsStreamingOptions()
+            streamingOptions.mapNotNull { it.toExternalIdEntity(titleId, dto.imdbId) }
+        }
         report.externalIdsUpserted = db.externalIdDao().upsertAll(externalIdEntities)
 
         // 3) Genres (name->entity), then cross-ref

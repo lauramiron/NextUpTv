@@ -132,7 +132,8 @@ data class ExternalIdEntity(
     val price: Short,
     val link: String? = null,          // Original URL from API (showLink or videoLink)
     @ColumnInfo(typeAffinity = ColumnInfo.TEXT)
-    val updatedAt: Date = Date()       // ISO 8601 timestamp in US/Pacific timezone stored as TEXT
+    val updatedAt: Date = Date(),      // ISO 8601 timestamp in US/Pacific timezone stored as TEXT
+    val imdbId: String? = null         // IMDb ID for cross-referencing (e.g., "tt1234567")
 )
 
 @Entity(

@@ -31,7 +31,7 @@ import io.github.lauramiron.nextuptv.data.local.entity.TitleGenreCrossRef
         PersonEntity::class, TitlePersonCrossRef::class, ExternalIdEntity::class,
         PopularityEntity::class, ResumeEntryEntity::class, LibrarySyncMetadataEntity::class
     ],
-    version = 8, exportSchema = true
+    version = 9, exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class AppDb : RoomDatabase() {
