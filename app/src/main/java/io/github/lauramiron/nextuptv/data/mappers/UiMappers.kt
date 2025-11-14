@@ -11,17 +11,18 @@ import io.github.lauramiron.nextuptv.util.StreamingService
 import io.github.lauramiron.nextuptv.util.tvAppPackage
 import io.github.lauramiron.nextuptv.data.local.entity.TitleEntity
 import io.github.lauramiron.nextuptv.data.local.entity.TitleWithExternalId
-import io.github.lauramiron.nextuptv.ui.details.MovieItem
+import io.github.lauramiron.nextuptv.ui.details.TitleItem
 import io.github.lauramiron.nextuptv.ui.resume.ResumeItem
+import io.github.lauramiron.nextuptv.util.buildLaunchUrl
 
 /**
- * Convert TitleEntity to MovieItem for UI display (without launch URL)
+ * Convert TitleEntity to TitleItem for UI display (without launch URL)
  */
-fun TitleEntity.toMovieItem(): MovieItem {
+fun TitleEntity.toTitleItem(): TitleItem {
     // Parse the imageSet JSON to extract card and background URLs
     val imageSet = parseImageSet(imageSetJson)
 
-    return MovieItem(
+    return TitleItem(
         id = id,
         title = name,
         description = synopsis,
@@ -30,31 +31,29 @@ fun TitleEntity.toMovieItem(): MovieItem {
         cardImageUrl = imageSet?.get("horizontalPoster")?.get("w360")
             ?: imageSet?.get("verticalPoster")?.get("w240"),
         videoUrl = null,
-        studio = null
+        studio = null,
+        service = null
     )
 }
 
 /**
- * Convert TitleWithExternalId to MovieItem for UI display with service-specific launch URL.
+ * Convert TitleWithExternalId to TitleItem for UI display with service-specific launch URL.
  *
  * Launch URL logic:
- * 1. If link is not null, use it directly (original URL from API)
- * 2. Otherwise, construct URL from externalId using buildLaunchUrl()
+ * - For Prime Video: constructs URL from externalId if available, otherwise uses link
+ * - For other services: uses link from API
  *
  * @param service The streaming service to build the launch URL for
- * @return MovieItem with videoUrl populated using the best available URL
+ * @return TitleItem with videoUrl populated using the best available URL
  */
-fun TitleWithExternalId.toMovieItem(service: StreamingService): MovieItem {
+fun TitleWithExternalId.toTitleItem(service: StreamingService): TitleItem {
     // Parse the imageSet JSON to extract card and background URLs
     val imageSet = parseImageSet(title.imageSetJson)
 
-//    // Build the launch URL - prefer stored link, fallback to constructed URL
-//    val videoUrl = when {
-//        !link.isNullOrBlank() -> link
-////        !externalId.isNullOrBlank() -> service.buildLaunchUrl(externalId)
-//        else -> null
-//    }
-    return MovieItem(
+    // Build the launch URL using service-specific logic
+    val videoUrl = service.buildLaunchUrl(link, externalId)
+
+    return TitleItem(
         id = title.id,
         title = title.name,
         description = title.synopsis,
@@ -62,8 +61,9 @@ fun TitleWithExternalId.toMovieItem(service: StreamingService): MovieItem {
             ?: imageSet?.get("verticalBackdrop")?.get("w720"),
         cardImageUrl = imageSet?.get("horizontalPoster")?.get("w360")
             ?: imageSet?.get("verticalPoster")?.get("w240"),
-        videoUrl = link,
-        studio = service.id.replaceFirstChar { it.uppercase() } // Use service name as studio
+        videoUrl = videoUrl,
+        studio = service.id.replaceFirstChar { it.uppercase() }, // Use service name as studio
+        service = service
     )
 }
 
@@ -130,5 +130,31 @@ fun ResumeWithTitleRow.toResumeItem(context: Context): ResumeItem? {
         appPackage = packageName,
         appBadge = null, // TODO: Load app badge
         deepLink = deepLink
+    )
+}
+
+/**
+ * Convert ResumeWithTitleRow to TitleItem for UI display.
+ * This allows resume entries to be displayed using the standard CardPresenter.
+ *
+ * Launch URL logic:
+ * 1. If externalLink is not null, use it directly
+ * 2. Otherwise returns null for videoUrl (item won't be launchable)
+ */
+fun ResumeWithTitleRow.toTitleItem(): TitleItem? {
+    // Parse image set
+    val imageSet = parseImageSet(resolvedTitleImage)
+
+    return TitleItem(
+        id = entry.resolvedTitleId ?: 0,
+        title = resolvedTitleName ?: entry.titleText,
+        description = null, // Resume entries don't typically show descriptions
+        backgroundImageUrl = imageSet?.get("horizontalBackdrop")?.get("w1440")
+            ?: imageSet?.get("verticalBackdrop")?.get("w720"),
+        cardImageUrl = imageSet?.get("verticalPoster")?.get("w240")
+            ?: imageSet?.get("horizontalPoster")?.get("w360"),
+        videoUrl = externalLink,
+        studio = entry.serviceId.id.replaceFirstChar { it.uppercase() },
+        service = entry.serviceId
     )
 }

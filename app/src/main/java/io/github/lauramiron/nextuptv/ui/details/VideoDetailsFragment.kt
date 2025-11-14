@@ -41,7 +41,7 @@ import java.util.Collections
  */
 class VideoDetailsFragment : DetailsSupportFragment() {
 
-    private var mSelectedMovieItem: MovieItem? = null
+    private var mSelectedTitleItem: TitleItem? = null
 
     private lateinit var mDetailsBackground: DetailsSupportFragmentBackgroundController
     private lateinit var mPresenterSelector: ClassPresenterSelector
@@ -53,15 +53,15 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
         mDetailsBackground = DetailsSupportFragmentBackgroundController(this)
 
-        mSelectedMovieItem = activity!!.intent.getSerializableExtra(DetailsActivity.Companion.MOVIE) as MovieItem
-        if (mSelectedMovieItem != null) {
+        mSelectedTitleItem = activity!!.intent.getSerializableExtra(DetailsActivity.Companion.MOVIE) as TitleItem
+        if (mSelectedTitleItem != null) {
             mPresenterSelector = ClassPresenterSelector()
             mAdapter = ArrayObjectAdapter(mPresenterSelector)
             setupDetailsOverviewRow()
             setupDetailsOverviewRowPresenter()
             setupRelatedMovieListRow()
             adapter = mAdapter
-            initializeBackground(mSelectedMovieItem)
+            initializeBackground(mSelectedTitleItem)
             onItemViewClickedListener = ItemViewClickedListener()
         } else {
             val intent = Intent(activity!!, MainActivity::class.java)
@@ -69,7 +69,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         }
     }
 
-    private fun initializeBackground(movieItem: MovieItem?) {
+    private fun initializeBackground(movieItem: TitleItem?) {
         mDetailsBackground.enableParallax()
         Glide.with(activity!!)
                 .asBitmap()
@@ -86,13 +86,13 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     }
 
     private fun setupDetailsOverviewRow() {
-        Log.d(TAG, "doInBackground: " + mSelectedMovieItem?.toString())
-        val row = DetailsOverviewRow(mSelectedMovieItem)
+        Log.d(TAG, "doInBackground: " + mSelectedTitleItem?.toString())
+        val row = DetailsOverviewRow(mSelectedTitleItem)
         row.imageDrawable = ContextCompat.getDrawable(activity!!, R.drawable.default_background)
         val width = convertDpToPixel(activity!!, DETAIL_THUMB_WIDTH)
         val height = convertDpToPixel(activity!!, DETAIL_THUMB_HEIGHT)
         Glide.with(activity!!)
-            .load(mSelectedMovieItem?.cardImageUrl)
+            .load(mSelectedTitleItem?.cardImageUrl)
             .centerCrop()
             .error(R.drawable.default_background)
             .into<SimpleTarget<Drawable>>(object : SimpleTarget<Drawable>(width, height) {
@@ -148,7 +148,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         detailsPresenter.onActionClickedListener = OnActionClickedListener { action ->
             if (action.id == ACTION_WATCH_TRAILER) {
                 val intent = Intent(activity!!, PlaybackActivity::class.java)
-                intent.putExtra(DetailsActivity.Companion.MOVIE, mSelectedMovieItem)
+                intent.putExtra(DetailsActivity.Companion.MOVIE, mSelectedTitleItem)
                 startActivity(intent)
             } else {
                 Toast.makeText(activity!!, action.toString(), Toast.LENGTH_SHORT).show()
@@ -184,10 +184,10 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             rowViewHolder: RowPresenter.ViewHolder,
             row: Row
         ) {
-            if (item is MovieItem) {
+            if (item is TitleItem) {
                 Log.d(TAG, "Item: " + item.toString())
                 val intent = Intent(activity!!, DetailsActivity::class.java)
-                intent.putExtra(resources.getString(R.string.movie), mSelectedMovieItem)
+                intent.putExtra(resources.getString(R.string.movie), mSelectedTitleItem)
 
                 val bundle =
                         ActivityOptionsCompat.makeSceneTransitionAnimation(

@@ -8,7 +8,7 @@ import androidx.leanback.media.MediaPlayerAdapter
 import androidx.leanback.media.PlaybackTransportControlGlue
 import androidx.leanback.widget.PlaybackControlsRow
 import io.github.lauramiron.nextuptv.ui.details.DetailsActivity
-import io.github.lauramiron.nextuptv.ui.details.MovieItem
+import io.github.lauramiron.nextuptv.ui.details.TitleItem
 
 /** Handles video playback with media controls. */
 class PlaybackVideoFragment : VideoSupportFragment() {
@@ -19,7 +19,7 @@ class PlaybackVideoFragment : VideoSupportFragment() {
         super.onCreate(savedInstanceState)
 
         val (_, title, description, _, _, videoUrl) =
-                activity?.intent?.getSerializableExtra(DetailsActivity.Companion.MOVIE) as MovieItem
+                activity?.intent?.getSerializableExtra(DetailsActivity.Companion.MOVIE) as TitleItem
 
         val glueHost = VideoSupportFragmentGlueHost(this@PlaybackVideoFragment)
         val playerAdapter = MediaPlayerAdapter(activity)

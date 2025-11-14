@@ -7,6 +7,8 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
+import io.github.lauramiron.nextuptv.util.StreamingService
+import io.github.lauramiron.nextuptv.util.tvAppPackage
 
 /**
  * Utility for launching streaming service apps via deep links.
@@ -15,36 +17,40 @@ import android.widget.Toast
 object StreamingLauncher {
     private const val TAG = "StreamingLauncher"
 
-    // Package names for TV apps
-    private const val NETFLIX_TV_PKG = "com.netflix.ninja"
-    private const val PRIME_TV_PKG = "com.amazon.amazonvideo.livingroom"
-    private const val DISNEY_TV_PKG = "com.disney.disneyplus"
-    private const val APPLE_TV_PKG = "com.apple.atve.androidtv.appletv"
-    private const val HBO_TV_PKG = "com.hbo.hbonow"
-    private const val PEACOCK_TV_PKG = "com.peacocktv.peacockandroid"
-    private const val HULU_TV_PKG = "com.hulu.plus"
-
     /**
      * Launch a streaming service app using the provided video URL.
+     * Does not specify a package, allowing the system to choose the handler.
      *
      * @param context Android context for launching the intent
      * @param videoUrl The deep link URL (e.g., https://www.netflix.com/watch/...)
      */
     fun launch(context: Context, videoUrl: String) {
         val uri = Uri.parse(videoUrl)
-        val host = uri.host?.lowercase() ?: ""
-
-        // Determine the appropriate package based on the URL host
-        val packageName = when {
-            host.contains("netflix.com") -> NETFLIX_TV_PKG
-            host.contains("primevideo.com") || host.contains("amazon.com") -> PRIME_TV_PKG
-            host.contains("disneyplus.com") -> DISNEY_TV_PKG
-            host.contains("apple.com") -> APPLE_TV_PKG
-            host.contains("hbomax.com") || host.contains("hbo.com") -> HBO_TV_PKG
-            host.contains("peacocktv.com") -> PEACOCK_TV_PKG
-            host.contains("hulu.com") -> HULU_TV_PKG
-            else -> null
+        val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+            addCategory(Intent.CATEGORY_BROWSABLE)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
+
+        try {
+            context.startActivity(intent)
+            Log.i(TAG, "Launched: $videoUrl")
+        } catch (e: ActivityNotFoundException) {
+            Toast.makeText(context, "No app found to play this content", Toast.LENGTH_SHORT).show()
+            Log.e(TAG, "Launch failed for $videoUrl", e)
+        }
+    }
+
+    /**
+     * Launch a streaming service app using the provided video URL and service.
+     * Specifies the service's package to ensure the correct app handles the link.
+     *
+     * @param context Android context for launching the intent
+     * @param videoUrl The deep link URL (e.g., https://www.netflix.com/watch/...)
+     * @param service The streaming service to launch
+     */
+    fun launchWithPackage(context: Context, videoUrl: String, service: StreamingService?) {
+        val uri = Uri.parse(videoUrl)
+        val packageName = service?.tvAppPackage
 
         // Create intent candidates
         val candidates = mutableListOf<Intent>()
@@ -57,9 +63,10 @@ object StreamingLauncher {
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
             // Add service-specific extras
-            when (packageName) {
-                NETFLIX_TV_PKG -> pinnedIntent.putExtra("source", "30")
+            when (service) {
+                StreamingService.NETFLIX -> pinnedIntent.putExtra("source", "30")
                 // Add other service-specific extras as needed
+                else -> {}
             }
 
             candidates.add(pinnedIntent)

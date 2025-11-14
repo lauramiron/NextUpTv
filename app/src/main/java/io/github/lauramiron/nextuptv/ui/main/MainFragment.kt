@@ -29,7 +29,7 @@ import io.github.lauramiron.nextuptv.R
 import io.github.lauramiron.nextuptv.data.LibraryRepository
 import io.github.lauramiron.nextuptv.data.ResumeRepository
 import io.github.lauramiron.nextuptv.util.StreamingService
-import io.github.lauramiron.nextuptv.data.mappers.toMovieItem
+import io.github.lauramiron.nextuptv.data.mappers.toTitleItem
 import io.github.lauramiron.nextuptv.data.mappers.toResumeItem
 import io.github.lauramiron.nextuptv.ui.app.AppCardPresenter
 import io.github.lauramiron.nextuptv.ui.app.AppItem
@@ -39,7 +39,7 @@ import io.github.lauramiron.nextuptv.ui.deeplinktest.DeepLinkItem
 import io.github.lauramiron.nextuptv.ui.deeplinktest.DeepLinkTestCardPresenter
 import io.github.lauramiron.nextuptv.ui.deeplinktest.DeeplinkTester
 import io.github.lauramiron.nextuptv.ui.deeplinktest.LaunchMethod
-import io.github.lauramiron.nextuptv.ui.details.MovieItem
+import io.github.lauramiron.nextuptv.ui.details.TitleItem
 import io.github.lauramiron.nextuptv.ui.resume.ResumeCardPresenter
 import io.github.lauramiron.nextuptv.ui.resume.ResumeItem
 import kotlinx.coroutines.launch
@@ -165,7 +165,7 @@ class MainFragment : BrowseSupportFragment() {
 
     private fun addResumeRow(rowsAdapter: ArrayObjectAdapter) {
         val header = HeaderItem(1L, "Resume Watching")
-        val presenter = ResumeCardPresenter()
+        val presenter = CardPresenter()
         val resumeAdapter = ArrayObjectAdapter(presenter)
 
         // Add empty row first, will be populated asynchronously
@@ -178,25 +178,25 @@ class MainFragment : BrowseSupportFragment() {
                 resumeRepository.resumeFeed(limit = 30).collect { rows ->
                     Log.d(TAG, "Resume feed collected ${rows.size} rows")
 
-                    // Convert database rows to UI items
-                    val resumeItems = rows.mapNotNull { row ->
+                    // Convert database rows to TitleItem for display
+                    val titleItems = rows.mapNotNull { row ->
                         Log.d(TAG, "Processing row: service=${row.entry.serviceId}, titleId=${row.entry.resolvedTitleId}, titleName=${row.resolvedTitleName}, link=${row.externalLink}, serviceItemId=${row.externalServiceItemId}")
-                        val item = row.toResumeItem(requireContext())
+                        val item = row.toTitleItem()
                         if (item == null) {
-                            Log.w(TAG, "Failed to convert row to ResumeItem: $row")
+                            Log.w(TAG, "Failed to convert row to TitleItem: $row")
                         } else {
-                            Log.d(TAG, "Converted to ResumeItem: ${item.title}, deepLink=${item.deepLink?.dataString}")
+                            Log.d(TAG, "Converted to TitleItem: ${item.title}, videoUrl=${item.videoUrl}, service=${item.service}")
                         }
                         item
                     }
 
-                    Log.d(TAG, "Total resume items after conversion: ${resumeItems.size}")
+                    Log.d(TAG, "Total title items after conversion: ${titleItems.size}")
 
                     // Update adapter on main thread
                     mHandler.post {
                         resumeAdapter.clear()
-                        resumeItems.forEach { resumeAdapter.add(it) }
-                        Log.d(TAG, "Resume adapter updated with ${resumeItems.size} items")
+                        titleItems.forEach { resumeAdapter.add(it) }
+                        Log.d(TAG, "Resume adapter updated with ${titleItems.size} items")
                     }
                 }
             } catch (e: Exception) {
@@ -224,6 +224,13 @@ class MainFragment : BrowseSupportFragment() {
         addTopShowsRows(rowsAdapter)
 
         // Test Deeplinks rows - one per service with example titles
+        addDeepLinksTestRows(rowsAdapter)
+
+
+        adapter = rowsAdapter
+    }
+
+    private fun addDeepLinksTestRows(rowsAdapter: ArrayObjectAdapter) {
         addDeepLinkTestRow(
             rowsAdapter = rowsAdapter,
             service = StreamingService.NETFLIX,
@@ -263,8 +270,6 @@ class MainFragment : BrowseSupportFragment() {
             externalId = "",
             headerId = 2004L
         )
-
-        adapter = rowsAdapter
     }
 
     private fun addTopShowsRows(rowsAdapter: ArrayObjectAdapter) {
@@ -290,11 +295,11 @@ class MainFragment : BrowseSupportFragment() {
             lifecycleScope.launch {
                 try {
                     val titlesWithExternalIds = repository.topTitlesWithExternalIds(service)
-                    val movieItems = titlesWithExternalIds.map { it.toMovieItem(service) }
+                    val titleItems = titlesWithExternalIds.map { it.toTitleItem(service) }
 
                     // Update adapter on main thread
                     mHandler.post {
-                        movieItems.forEach { listRowAdapter.add(it) }
+                        titleItems.forEach { listRowAdapter.add(it) }
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "Error loading top shows for $service", e)
@@ -323,11 +328,11 @@ class MainFragment : BrowseSupportFragment() {
             when (item) {
 
                 // Launch streaming content
-                is MovieItem -> {
+                is TitleItem -> {
                     val videoUrl = item.videoUrl
                     if (videoUrl != null) {
                         Toast.makeText(requireContext(),
-                            "Launching videoUrl ${videoUrl}", Toast.LENGTH_SHORT).show()
+                            "Launching ${item.title}", Toast.LENGTH_SHORT).show()
                         StreamingLauncher.launch(requireContext(), videoUrl)
                     } else {
                         Toast.makeText(requireContext(),
@@ -376,7 +381,7 @@ class MainFragment : BrowseSupportFragment() {
         override fun onItemSelected(itemViewHolder: Presenter.ViewHolder?, item: Any?,
                                     rowViewHolder: RowPresenter.ViewHolder, row: Row
         ) {
-            if (item is MovieItem) {
+            if (item is TitleItem) {
                 mBackgroundUri = item.backgroundImageUrl
                 startBackgroundTimer()
             }
