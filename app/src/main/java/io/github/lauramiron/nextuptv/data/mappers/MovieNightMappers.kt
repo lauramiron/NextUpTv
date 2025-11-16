@@ -3,7 +3,7 @@ package io.github.lauramiron.nextuptv.data.mappers
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import io.github.lauramiron.nextuptv.data.local.entity.CreditRole
-import io.github.lauramiron.nextuptv.data.local.entity.ExternalIdEntity
+import io.github.lauramiron.nextuptv.data.local.entity.StreamingOptionEntity
 import io.github.lauramiron.nextuptv.data.local.entity.PersonEntity
 import io.github.lauramiron.nextuptv.util.StreamingService
 import io.github.lauramiron.nextuptv.data.local.entity.TitleEntity
@@ -166,7 +166,7 @@ fun TitleDto.toTitlePersonRefs(
 private fun TitleDto.isSeries(): Boolean =
     this.showType.equals("series", true)
 
-fun StreamingOptionDto.toExternalIdEntity(titleId: Long, imdbId: String? = null): ExternalIdEntity? {
+fun StreamingOptionDto.toStreamingOptionEntity(titleId: Long): StreamingOptionEntity? {
     val serviceString = service.id.lowercase()
     val streamingService = StreamingService.fromString(serviceString) ?: return null // skip unsupported services
 
@@ -179,14 +179,13 @@ fun StreamingOptionDto.toExternalIdEntity(titleId: Long, imdbId: String? = null)
         else -> link ?: videoLink ?: "unknown"// add cases for disney/hulu/peacock/etc later
     }
 
-    return ExternalIdEntity(
+    return StreamingOptionEntity(
         service = streamingService,
         serviceItemId = serviceItemId,
         entityId = titleId,
         available = true,
         price = 0,
-        link = link ?: videoLink,
-        imdbId = imdbId
+        link = link ?: videoLink
 //        price = price.toShortAmountOrNull()
     )
 }

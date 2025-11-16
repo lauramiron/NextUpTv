@@ -224,7 +224,7 @@ class LibrarySyncCliTest {
      */
     @Test
     fun runPartialHboSync() = runBlocking {
-        runSyncForService(StreamingService.HBO, maxPages = 3, resume = false)
+        runSyncForService(StreamingService.HBO, maxPages = 50, resume = true)
     }
     /**
      * Partial Hbo sync - limits to a specific number of pages.

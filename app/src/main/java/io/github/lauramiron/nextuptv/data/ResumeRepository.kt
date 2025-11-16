@@ -13,7 +13,7 @@ class ResumeRepository(
     private val db: AppDb
 ) {
     private val resumeDao = db.resumeDao()
-    private val extDao = db.externalIdDao()
+    private val streamingOptionDao = db.streamingOptionDao()
     private val titleDao = db.titleDao()
 //    private val episodeDao = db.episodeDao()
 
@@ -32,7 +32,7 @@ class ResumeRepository(
         unresolved.forEach { re ->
             // 1) Provider id match, if present
             val byProvider = re.serviceItemId?.let { pid ->
-                extDao.findTitleByExternal(re.serviceId, pid)
+                streamingOptionDao.findTitleByExternal(re.serviceId, pid)
             }
 
             if (byProvider != null) {
@@ -45,8 +45,13 @@ class ResumeRepository(
             }
 
             // 2) Title-based heuristic (not yet implemented)
-//            val titleMatch = titleDao.findByNormalizedName(normalize(re.titleText))
-//            if (titleMatch != null) {
+            val titleMatch = titleDao.findTitleByName(re.titleText)
+            if (titleMatch != null) {
+                resumeDao.markResolved(
+                    resumeId = re.id,
+                    titleId = titleMatch.id,
+                    episodeId = null
+                )
 //                // Optional: episode matching (by S/E or episodeText fuzzy)
 //                val episodeId = resolveEpisode(titleMatch.id, re)
 //                resumeDao.markResolved(
@@ -54,7 +59,7 @@ class ResumeRepository(
 //                    titleId = titleMatch.id,
 //                    episodeId = episodeId,
 //                )
-//            }
+            }
         }
     }
 

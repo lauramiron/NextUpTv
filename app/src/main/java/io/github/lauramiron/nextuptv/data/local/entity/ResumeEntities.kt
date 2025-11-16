@@ -8,6 +8,7 @@ import io.github.lauramiron.nextuptv.util.StreamingService
 @Entity(
     tableName = "resume_entries",
     indices = [
+        Index(value = ["serviceId", "titleText"], unique = true),
         Index(value = ["serviceId", "serviceItemId"]),
         Index(value = ["resolvedTitleId"]),
     ]

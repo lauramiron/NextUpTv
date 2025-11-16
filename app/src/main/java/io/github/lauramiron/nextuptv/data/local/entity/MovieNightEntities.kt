@@ -31,7 +31,8 @@ data class TitleEntity(
 //    val language: String?,
 //    val maturityRating: String?,
     val imageSetJson: String?,          // JSON string of the imageSet object
-    val localUpdatedAt: Long = System.currentTimeMillis()
+    @ColumnInfo(typeAffinity = ColumnInfo.TEXT)
+    val updatedAt: Date = Date()       // ISO 8601 timestamp in US/Pacific timezone stored as TEXT
 )
 
 
@@ -118,11 +119,11 @@ data class TitlePersonCrossRef(
     val role: CreditRole,
 )
 
-// ---- EXTERNAL IDS (lookup by Netflix/etc or by MovieOfTheNight itself) ----
+// ---- STREAMING OPTIONS (lookup by Netflix/etc or by MovieOfTheNight itself) ----
 @Entity(
-    tableName = "external_ids",
+    tableName = "streaming_options",
     indices = [Index(value = ["entityId", "service"], unique = true), Index("entityId")])
-data class ExternalIdEntity(
+data class StreamingOptionEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
 //    val entityType: String,            // "title" | "episode"
     val entityId: Long,                // FK to titles.id or episodes.id (enforce in code)
@@ -132,8 +133,7 @@ data class ExternalIdEntity(
     val price: Short,
     val link: String? = null,          // Original URL from API (showLink or videoLink)
     @ColumnInfo(typeAffinity = ColumnInfo.TEXT)
-    val updatedAt: Date = Date(),      // ISO 8601 timestamp in US/Pacific timezone stored as TEXT
-    val imdbId: String? = null         // IMDb ID for cross-referencing (e.g., "tt1234567")
+    val updatedAt: Date = Date()       // ISO 8601 timestamp in US/Pacific timezone stored as TEXT
 )
 
 @Entity(
@@ -156,11 +156,11 @@ data class PopularityEntity(
 )
 
 /**
- * Result class for queries that join titles with external IDs.
+ * Result class for queries that join titles with streaming options.
  * Used to construct launch URLs for streaming services.
  */
 data class TitleWithExternalId(
     @Embedded val title: TitleEntity,
-    val externalId: String?,  // serviceItemId from external_ids table, null if no external ID exists
-    val link: String?         // Original link from external_ids table (preferred for launch URLs)
+    val externalId: String?,  // serviceItemId from streaming_options table, null if no streaming option exists
+    val link: String?         // Original link from streaming_options table (preferred for launch URLs)
 )

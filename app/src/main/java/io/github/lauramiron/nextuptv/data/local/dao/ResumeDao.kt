@@ -50,11 +50,11 @@ interface ResumeDao {
         SELECT re.*,
                t.name AS resolvedTitleName,
                t.imageSetJson AS resolvedTitleImage,
-               e.link AS externalLink,
-               e.serviceItemId AS externalServiceItemId
+               so.link AS externalLink,
+               so.serviceItemId AS externalServiceItemId
         FROM resume_entries re
         LEFT JOIN titles t ON t.id = re.resolvedTitleId
-        LEFT JOIN external_ids e ON e.entityId = re.resolvedTitleId AND e.service = re.serviceId
+        LEFT JOIN streaming_options so ON so.entityId = re.resolvedTitleId AND so.service = re.serviceId
         ORDER BY resumeIndex
         LIMIT :limit
     """)

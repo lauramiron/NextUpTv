@@ -166,13 +166,13 @@ class LibrarySyncWorkerTest {
                 println("Synopsis: ${fullTitle?.synopsis?.take(100)}...")
                 println()
 
-                // Verify external IDs were stored
+                // Verify streaming options were stored
                 if (report.externalIdsUpserted > 0) {
-                    val externalIds = db.externalIdDao().findId(titleInDb,
+                    val streamingOptionId = db.streamingOptionDao().findId(titleInDb,
                         StreamingService.NETFLIX
                     )
-                    if (externalIds != null) {
-                        println("✅ Netflix external ID found for title")
+                    if (streamingOptionId != null) {
+                        println("✅ Netflix streaming option found for title")
                     }
                 }
 

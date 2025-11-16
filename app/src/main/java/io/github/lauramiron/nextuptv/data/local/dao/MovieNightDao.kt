@@ -5,7 +5,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
-import io.github.lauramiron.nextuptv.data.local.entity.ExternalIdEntity
+import io.github.lauramiron.nextuptv.data.local.entity.StreamingOptionEntity
 import io.github.lauramiron.nextuptv.data.local.entity.GenreEntity
 import io.github.lauramiron.nextuptv.data.local.entity.PersonEntity
 import io.github.lauramiron.nextuptv.data.local.entity.PopularityEntity
@@ -15,6 +15,7 @@ import io.github.lauramiron.nextuptv.data.local.entity.TitleEntity
 import io.github.lauramiron.nextuptv.data.local.entity.TitleGenreCrossRef
 import io.github.lauramiron.nextuptv.data.local.entity.TitlePersonCrossRef
 import io.github.lauramiron.nextuptv.data.local.entity.TitleWithExternalId
+import java.text.Normalizer.normalize
 import java.util.Date
 
 @Dao
@@ -43,6 +44,13 @@ interface TitleDao {
         return existingId
     }
 
+    @Query("""
+        SELECT * FROM titles
+        WHERE name COLLATE NOCASE = :name
+        LIMIT 1
+    """)
+    suspend fun findTitleByName(name: String): TitleEntity?
+
 //    @Transaction
 //    @Query("""
 //        SELECT t.* FROM titles t
@@ -53,18 +61,18 @@ interface TitleDao {
 }
 
 @Dao
-interface ExternalIdDao {
-    // 1) Fast-path insert that won’t replace existing rows
+interface StreamingOptionDao {
+    // 1) Fast-path insert that won't replace existing rows
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertIgnoreAll(items: List<ExternalIdEntity>): List<Long>
+    suspend fun insertIgnoreAll(items: List<StreamingOptionEntity>): List<Long>
 
     // 2) Batch update by primary key
     @Update
-    suspend fun updateAll(items: List<ExternalIdEntity>)
+    suspend fun updateAll(items: List<StreamingOptionEntity>)
 
     // 3) Find existing row id by natural key (unique index recommended)
     @Query("""
-        SELECT id FROM external_ids
+        SELECT id FROM streaming_options
         WHERE entityId = :entityId AND service = :service
         LIMIT 1
     """)
@@ -76,7 +84,7 @@ interface ExternalIdDao {
      */
     @Query("""
         SELECT t.* FROM titles t
-        INNER JOIN external_ids e ON t.id = e.entityId
+        INNER JOIN streaming_options e ON t.id = e.entityId
         WHERE e.service = :service AND e.serviceItemId = :serviceItemId
         LIMIT 1
     """)
@@ -89,11 +97,11 @@ interface ExternalIdDao {
      * Returns the number of rows processed.
      */
     @Transaction
-    suspend fun upsertAll(items: List<ExternalIdEntity>): Int {
+    suspend fun upsertAll(items: List<StreamingOptionEntity>): Int {
         if (items.isEmpty()) return 0
 
         val results = insertIgnoreAll(items)
-        val toUpdate = ArrayList<ExternalIdEntity>()
+        val toUpdate = ArrayList<StreamingOptionEntity>()
         val currentTime = Date()
 
         results.forEachIndexed { i, rowId ->
@@ -249,13 +257,13 @@ interface PopularityDao {
 
     /**
      * Get top shows for a service along with their external IDs for that service.
-     * Returns title with both serviceItemId and original link from external_ids table.
+     * Returns title with both serviceItemId and original link from streaming_options table.
      */
     @Query("""
         SELECT t.*, e.serviceItemId as externalId, e.link as link
         FROM titles t
         INNER JOIN title_popularities p ON t.id = p.titleId
-        LEFT JOIN external_ids e ON t.id = e.entityId AND e.service = :service
+        LEFT JOIN streaming_options e ON t.id = e.entityId AND e.service = :service
         WHERE p.service = :service
         AND p.popularityType = 'TOP_SHOWS'
         ORDER BY p.id ASC

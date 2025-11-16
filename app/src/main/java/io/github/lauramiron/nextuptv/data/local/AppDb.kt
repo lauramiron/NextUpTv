@@ -4,7 +4,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 //import io.github.lauramiron.nextuptv.data.local.dao.EpisodeDao
-import io.github.lauramiron.nextuptv.data.local.dao.ExternalIdDao
+import io.github.lauramiron.nextuptv.data.local.dao.StreamingOptionDao
 import io.github.lauramiron.nextuptv.data.local.dao.GenreDao
 import io.github.lauramiron.nextuptv.data.local.dao.LibrarySyncMetadataDao
 import io.github.lauramiron.nextuptv.data.local.dao.PersonDao
@@ -15,7 +15,7 @@ import io.github.lauramiron.nextuptv.data.local.dao.TitleGenreCrossRefDao
 import io.github.lauramiron.nextuptv.data.local.dao.TitlePersonCrossRefDao
 import io.github.lauramiron.nextuptv.data.local.entity.TitlePersonCrossRef
 import io.github.lauramiron.nextuptv.data.local.entity.EpisodeEntity
-import io.github.lauramiron.nextuptv.data.local.entity.ExternalIdEntity
+import io.github.lauramiron.nextuptv.data.local.entity.StreamingOptionEntity
 import io.github.lauramiron.nextuptv.data.local.entity.GenreEntity
 import io.github.lauramiron.nextuptv.data.local.entity.LibrarySyncMetadataEntity
 import io.github.lauramiron.nextuptv.data.local.entity.PersonEntity
@@ -28,16 +28,16 @@ import io.github.lauramiron.nextuptv.data.local.entity.TitleGenreCrossRef
     entities = [
         TitleEntity::class, EpisodeEntity::class,
         GenreEntity::class, TitleGenreCrossRef::class,
-        PersonEntity::class, TitlePersonCrossRef::class, ExternalIdEntity::class,
+        PersonEntity::class, TitlePersonCrossRef::class, StreamingOptionEntity::class,
         PopularityEntity::class, ResumeEntryEntity::class, LibrarySyncMetadataEntity::class
     ],
-    version = 9, exportSchema = true
+    version = 12, exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class AppDb : RoomDatabase() {
     abstract fun titleDao(): TitleDao
 //    abstract fun episodeDao(): EpisodeDao
-    abstract fun externalIdDao(): ExternalIdDao
+    abstract fun streamingOptionDao(): StreamingOptionDao
     abstract fun genreDao(): GenreDao
     abstract fun personDao(): PersonDao
     abstract fun titleGenreDao(): TitleGenreCrossRefDao

@@ -6,7 +6,7 @@ import com.squareup.moshi.Types
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import io.github.lauramiron.nextuptv.data.local.AppDb
 import io.github.lauramiron.nextuptv.data.local.entity.CreditRole
-import io.github.lauramiron.nextuptv.data.local.entity.ExternalIdEntity
+import io.github.lauramiron.nextuptv.data.local.entity.StreamingOptionEntity
 import io.github.lauramiron.nextuptv.data.local.entity.LibrarySyncMetadataEntity
 import io.github.lauramiron.nextuptv.data.local.entity.PersonEntity
 import io.github.lauramiron.nextuptv.data.local.entity.PopularityEntity
@@ -21,7 +21,7 @@ import io.github.lauramiron.nextuptv.data.mappers.extractUsStreamingOptions
 import io.github.lauramiron.nextuptv.data.mappers.toCast
 import io.github.lauramiron.nextuptv.data.mappers.toDirectors
 import io.github.lauramiron.nextuptv.data.mappers.toEntity
-import io.github.lauramiron.nextuptv.data.mappers.toExternalIdEntity
+import io.github.lauramiron.nextuptv.data.mappers.toStreamingOptionEntity
 import io.github.lauramiron.nextuptv.data.mappers.toGenreNames
 import io.github.lauramiron.nextuptv.data.remote.movienight.MovieNightApi
 import io.github.lauramiron.nextuptv.data.remote.movienight.StreamingOptionDto
@@ -194,26 +194,25 @@ class LibraryRepository(
         report.titlesUpserted = 1
         report.titleIdsUpserted = longArrayOf(titleId).toList()
 
-        // 2) External IDs
-        val externalIdEntities = if (isHboSync) {
-            // For HBO sync, ignore streaming options and create a single HBO external ID with "unknown" values
+        // 2) Streaming Options
+        val streamingOptionEntities = if (isHboSync) {
+            // For HBO sync, ignore streaming options and create a single HBO streaming option with "unknown" values
             listOf(
-                ExternalIdEntity(
+                StreamingOptionEntity(
                     service = StreamingService.HBO,
                     serviceItemId = "unknown",
                     entityId = titleId,
                     available = true,
                     price = 0,
-                    link = "unknown",
-                    imdbId = dto.imdbId
+                    link = "unknown"
                 )
             )
         } else {
             // Normal processing: extract streaming options and parse service-specific IDs
             val streamingOptions: List<StreamingOptionDto> = dto.extractUsStreamingOptions()
-            streamingOptions.mapNotNull { it.toExternalIdEntity(titleId, dto.imdbId) }
+            streamingOptions.mapNotNull { it.toStreamingOptionEntity(titleId) }
         }
-        report.externalIdsUpserted = db.externalIdDao().upsertAll(externalIdEntities)
+        report.externalIdsUpserted = db.streamingOptionDao().upsertAll(streamingOptionEntities)
 
         // 3) Genres (name->entity), then cross-ref
         val genreNames: List<String> = dto.toGenreNames() // mapper normalizes ids/names from response
