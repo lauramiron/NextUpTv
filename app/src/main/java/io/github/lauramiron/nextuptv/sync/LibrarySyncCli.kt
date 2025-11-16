@@ -83,7 +83,7 @@ import java.io.File
 //            println("Time elapsed: ${elapsed}s")
 //            println()
 //            println("=== Sync Report ===")
-//            println("Pages processed: ${report.pages}")
+//            println("Pages processed: ${report.pagesProcessed}")
 //            println("Titles upserted: ${report.titlesUpserted}")
 //            println("External IDs upserted: ${report.externalIdsUpserted}")
 //            println("Genres upserted: ${report.genresUpserted}")

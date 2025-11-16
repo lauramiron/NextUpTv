@@ -10,6 +10,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import io.github.lauramiron.nextuptv.data.LibraryRepository
+import io.github.lauramiron.nextuptv.util.StreamingService
 
 enum class SyncMode { FULL, INCREMENTAL, SINGLE_TITLE }
 class LibrarySyncWorker(
@@ -34,7 +35,7 @@ class LibrarySyncWorker(
     }
 
     private suspend fun runFullSync(): Result {
-        repo.syncAll(catalogs = "netflix") // TODO
+        repo.syncServices(services=listOf(StreamingService.NETFLIX)) // TODO
         return Result.success()
     }
 

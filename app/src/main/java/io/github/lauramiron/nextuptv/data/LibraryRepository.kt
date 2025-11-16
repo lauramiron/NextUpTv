@@ -6,10 +6,7 @@ import com.squareup.moshi.Types
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import io.github.lauramiron.nextuptv.data.local.AppDb
 import io.github.lauramiron.nextuptv.data.local.entity.CreditRole
-import io.github.lauramiron.nextuptv.data.local.entity.StreamingOptionEntity
 import io.github.lauramiron.nextuptv.data.local.entity.LibrarySyncMetadataEntity
-import io.github.lauramiron.nextuptv.data.local.entity.PersonEntity
-import io.github.lauramiron.nextuptv.data.local.entity.PopularityEntity
 import io.github.lauramiron.nextuptv.util.StreamingService
 import io.github.lauramiron.nextuptv.data.local.entity.SyncType
 import io.github.lauramiron.nextuptv.data.local.entity.TitleEntity
@@ -28,6 +25,7 @@ import io.github.lauramiron.nextuptv.data.remote.movienight.StreamingOptionDto
 import io.github.lauramiron.nextuptv.data.remote.movienight.TitleDto
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
 class LibraryRepository(
@@ -44,10 +42,19 @@ class LibraryRepository(
         Types.newParameterizedType(List::class.java, String::class.java)
     )
 
-    data class SyncReport(
-        var pages: Int = 0,
+    data class UpsertTitleReport(
+        val titleIdsUpserted: List<Long> = emptyList(),
+        val externalIdsUpserted: Int = 0,
+        val genresUpserted: Int = 0,
+        val peopleUpserted: Int = 0,
+        val titleGenreRefs: Int = 0,
+        val titlePersonRefs: Int = 0
+    )
+
+    data class SyncPageReport(
+        var pageResponseSize: Int = 0,
         var titlesUpserted: Int = 0,
-        var titleIdsUpserted: List<Long> = emptyList<Long>(),
+        var titleIdsUpserted: List<Long> = emptyList(),
         var episodesUpserted: Int = 0,
         var externalIdsUpserted: Int = 0,
         var genresUpserted: Int = 0,
@@ -56,17 +63,165 @@ class LibraryRepository(
         var titlePersonRefs: Int = 0,
         var lastCursor: String? = null
     ) {
-        operator fun plusAssign(other: SyncReport) {
-            this.pages += other.pages
-            this.titlesUpserted += other.titlesUpserted
+        operator fun plusAssign(other: UpsertTitleReport) {
+            this.titlesUpserted += 1
             this.titleIdsUpserted += other.titleIdsUpserted
-            this.episodesUpserted += other.episodesUpserted
             this.externalIdsUpserted += other.externalIdsUpserted
             this.genresUpserted += other.genresUpserted
             this.peopleUpserted += other.peopleUpserted
             this.titleGenreRefs += other.titleGenreRefs
             this.titlePersonRefs += other.titlePersonRefs
+        }
+    }
+
+    data class SyncReport(
+        var pagesProcessed: Int = 0,
+        var pageResponseSize: Int = 0,
+        var titlesUpserted: Int = 0,
+        var titleIdsUpserted: List<Long> = emptyList(),
+        var episodesUpserted: Int = 0,
+        var externalIdsUpserted: Int = 0,
+        var genresUpserted: Int = 0,
+        var peopleUpserted: Int = 0,
+        var titleGenreRefs: Int = 0,
+        var titlePersonRefs: Int = 0,
+        var lastCursor: String? = null,
+        val startTime: Long = System.currentTimeMillis(),
+        var lastPageReport: SyncPageReport? = null,
+        private val db: AppDb? = null
+    ) {
+        private val initialDbCount: Int? = db?.let { runBlocking { it.titleDao().countAll() } }
+
+        init {
+            printSyncStarting()
+        }
+        operator fun plusAssign(pageReport: SyncPageReport) {
+            this.pagesProcessed += 1
+            this.titlesUpserted += pageReport.titlesUpserted
+            this.titleIdsUpserted += pageReport.titleIdsUpserted
+            this.episodesUpserted += pageReport.episodesUpserted
+            this.externalIdsUpserted += pageReport.externalIdsUpserted
+            this.genresUpserted += pageReport.genresUpserted
+            this.peopleUpserted += pageReport.peopleUpserted
+            this.titleGenreRefs += pageReport.titleGenreRefs
+            this.titlePersonRefs += pageReport.titlePersonRefs
+            this.lastCursor = pageReport.lastCursor
+            this.lastPageReport = pageReport
+        }
+
+        fun copyFrom(other: SyncReport) {
+            this.pagesProcessed = other.pagesProcessed
+            this.pageResponseSize = other.pageResponseSize
+            this.titlesUpserted = other.titlesUpserted
+            this.titleIdsUpserted = other.titleIdsUpserted
+            this.episodesUpserted = other.episodesUpserted
+            this.externalIdsUpserted = other.externalIdsUpserted
+            this.genresUpserted = other.genresUpserted
+            this.peopleUpserted = other.peopleUpserted
+            this.titleGenreRefs = other.titleGenreRefs
+            this.titlePersonRefs = other.titlePersonRefs
             this.lastCursor = other.lastCursor
+            this.lastPageReport = other.lastPageReport
+            // startTime is NOT copied
+        }
+
+        private fun printSyncStarting() {
+            initialDbCount?.let {
+                println("Initial title count: $it")
+                println()
+            }
+            println("Starting sync...")
+        }
+
+        fun printPageStats() {
+            lastPageReport?.let { page ->
+                println("Page $pagesProcessed: ${page.pageResponseSize} titles | " +
+                        "+${page.titlesUpserted} titles, " +
+                        "+${page.genresUpserted} genres, " +
+                        "+${page.peopleUpserted} people")
+            }
+        }
+
+        fun printSyncComplete() {
+            val elapsedSeconds = (System.currentTimeMillis() - startTime) / 1000.0
+            println()
+            println("=== Sync Complete ===")
+            println("Time elapsed: ${elapsedSeconds}s")
+            println()
+            println("=== Sync Report ===")
+            println("Pages processed: $pagesProcessed")
+            println("Titles upserted: $titlesUpserted")
+            println("External IDs upserted: $externalIdsUpserted")
+            println("Genres upserted: $genresUpserted")
+            println("People upserted: $peopleUpserted")
+            println("Title-Genre refs: $titleGenreRefs")
+            println("Title-Person refs: $titlePersonRefs")
+            println()
+            initialDbCount?.let { initial ->
+                val final = runBlocking { db!!.titleDao().countAll() }
+                println("Database title count: $initial -> $final (+${final - initial})")
+                println()
+            }
+            println("SUCCESS!")
+        }
+
+        fun printSyncFailed(e: Exception) {
+            val elapsedSeconds = (System.currentTimeMillis() - startTime) / 1000.0
+            println()
+            println("=== Sync Failed ===")
+            println("Time elapsed: ${elapsedSeconds}s")
+            println("Error: ${e.message}")
+            e.printStackTrace()
+        }
+    }
+
+    /**
+     * Sync a streaming service with optional resume and page limit support.
+     * Prints sync progress and completion/failure messages.
+     *
+     * @param service The streaming service to sync
+     * @param maxPages Maximum number of pages to sync, or -1 for full sync (default)
+     * @param resume If true, attempts to resume from the last sync's cursor; if false, starts from beginning (default)
+     */
+    suspend fun syncService(service: StreamingService, maxPages: Int = -1, resume: Boolean = false) {
+        syncServices(services = listOf(service), maxPages = maxPages, resume = resume)
+    }
+
+    /**
+     * Sync all defined streaming services.
+     * Prints sync progress and completion/failure messages for all services.
+     *
+     * @param maxPages Maximum number of pages to sync per service, or -1 for full sync (default)
+     * @param resume If true, attempts to resume from the last sync's cursor; if false, starts from beginning (default)
+     */
+    suspend fun syncAll(maxPages: Int = -1, resume: Boolean = false) {
+        syncServices(services = StreamingService.entries.toList(), maxPages = maxPages, resume = resume)
+    }
+
+    /**
+     * Get the cursor to resume from for a service, or null if starting fresh.
+     * Prints informative messages about the resume state.
+     *
+     * @param catalogs The catalog(s) to sync (e.g., "netflix", "apple")
+     * @return The cursor to resume from, or null to start from beginning
+     */
+    suspend fun getLastNextCursor(catalogs: String): String? {
+        val serviceName = catalogs.uppercase()
+        val lastSync = db.librarySyncMetadataDao().getLastSyncForService(catalogs)
+
+        return when {
+            lastSync == null -> {
+                println("No previous sync found for $serviceName. Starting from beginning.")
+                null
+            }
+            lastSync.success && lastSync.nextCursor == null -> {
+                println("Last sync for $serviceName completed fully. Restarting from beginning.")
+                null
+            }
+            else -> {
+                println("Resuming $serviceName sync from cursor: ${lastSync.nextCursor}")
+                lastSync.nextCursor
+            }
         }
     }
 
@@ -79,17 +234,26 @@ class LibraryRepository(
      * - Streaming options: store only what you decided (e.g., serviceId only) in your mapper
      * - Logs sync metadata for tracking and resuming interrupted syncs
      */
-    suspend fun syncAll(
-        catalogs: String,
-        startCursor: String? = null,
-        maxPages: Int = -1
+    suspend fun syncServices(
+        services: List<StreamingService>,
+        maxPages: Int = -1,
+        resume: Boolean = false
     ): SyncReport {
-        val servicesList = catalogs.split(",").map { it.trim() }
-        val servicesJson = stringListAdapter.toJson(servicesList)
+        // Build catalogs string, replacing HBO with Prime addon catalog
+        val catalogsList = services.map { service ->
+            if (service == StreamingService.HBO) "prime.addon.hbomaxus" else service.id
+        }
+        val catalogs = catalogsList.joinToString(",")
 
-        // Special handling for HBO: transform to Prime addon catalog for API
-        val isHboSync = catalogs.trim().equals("hbo", ignoreCase = true)
-        val apiCatalogs = if (isHboSync) "prime.addon.hbomaxus" else catalogs
+        // Determine starting cursor based on resume parameter
+        // Use first service's ID for cursor lookup when resuming
+        val startCursor = if (resume) getLastNextCursor(services.first().id) else null
+
+        val syncTypeDisplay = if (maxPages == -1) "Full" else "Partial (First $maxPages pages)"
+        println("=== $syncTypeDisplay ${services.joinToString(", ") { it.id.uppercase() }} Sync ${if (resume && startCursor != null) "(Resuming)" else ""} ===\n")
+
+        val report = SyncReport(db = db)
+        val servicesList = stringListAdapter.toJson(services.map { it.id })
 
         // Determine sync type based on maxPages parameter
         val syncType = if (maxPages == -1) SyncType.FULL else SyncType.PARTIAL
@@ -98,7 +262,7 @@ class LibraryRepository(
             updatedAt = Date(),
             syncType = syncType,
             success = false,
-            services = servicesJson,
+            services = servicesList,
             metadataJson = null,
             nextCursor = startCursor
         )
@@ -106,7 +270,7 @@ class LibraryRepository(
         val metadataId = db.librarySyncMetadataDao().insert(syncMetadata)
 
         return try {
-            val report = performSync(apiCatalogs, startCursor, maxPages, isHboSync)
+            report.copyFrom(performSync(catalogs, startCursor, maxPages))
 
             // Determine if this was a partial sync or a complete full sync
             // - If maxPages != -1, it's always a partial sync (save cursor for resumption)
@@ -127,11 +291,15 @@ class LibraryRepository(
                 )
             )
 
+            report.printSyncComplete()
             report
         } catch (e: Exception) {
+            // Print sync failure using report that has correct startTime
+            report.printSyncFailed(e)
+
             // Update the existing metadata record with failure results
             // Save any partial progress cursor for potential resumption
-            val partialReportJson = moshi.adapter(SyncReport::class.java).toJson(SyncReport())
+            val partialReportJson = moshi.adapter(SyncReport::class.java).toJson(report)
             db.librarySyncMetadataDao().update(
                 syncMetadata.copy(
                     id = metadataId.toInt(),
@@ -149,10 +317,8 @@ class LibraryRepository(
         catalogs: String,
         startCursor: String?,
         maxPages: Int,
-        isHboSync: Boolean = false
     ): SyncReport {
         val report = SyncReport()
-        var pagesProcessed = 0
 
         // Use Flow to process pages incrementally as they arrive
         api.fetchShowsPagingFlow(
@@ -161,21 +327,17 @@ class LibraryRepository(
             maxPages = if (maxPages == -1) null else maxPages
         ).collect { response ->
             // Process this page immediately and insert into database
-            val pageReport = SyncReport()
+            val pageReport = SyncPageReport(
+                pageResponseSize = response.shows.size,
+                lastCursor = response.nextCursor
+            )
 
             response.shows.forEach { titleDto ->
-                pageReport += upsertOneTitleTree(titleDto, isHboSync)
+                pageReport += upsertOneTitleTree(titleDto)
             }
 
-            pagesProcessed++
-            report.pages = pagesProcessed
             report += pageReport
-            report.lastCursor = response.nextCursor
-
-            println("Page $pagesProcessed: ${response.shows.size} titles | " +
-                    "+${pageReport.titlesUpserted} titles, " +
-                    "+${pageReport.genresUpserted} genres, " +
-                    "+${pageReport.peopleUpserted} people")
+            report.printPageStats()
         }
 
         return report
@@ -185,38 +347,18 @@ class LibraryRepository(
      * Maps a TitleDto (and nested episodes/ids/credits/genres) to entities and upserts them.
      * Returns a report of what was inserted/updated.
      */
-    internal suspend fun upsertOneTitleTree(dto: TitleDto, isHboSync: Boolean = false): SyncReport {
-        val report = SyncReport()
-
+    internal suspend fun upsertOneTitleTree(dto: TitleDto): UpsertTitleReport {
         // 1) Title
         val titleEntity: TitleEntity = dto.toEntity() // your mapper sets: name, kind, year, imageSetJson, etc.
         val titleId: Long = db.titleDao().upsert(titleEntity)
-        report.titlesUpserted = 1
-        report.titleIdsUpserted = longArrayOf(titleId).toList()
 
         // 2) Streaming Options
-        val streamingOptionEntities = if (isHboSync) {
-            // For HBO sync, ignore streaming options and create a single HBO streaming option with "unknown" values
-            listOf(
-                StreamingOptionEntity(
-                    service = StreamingService.HBO,
-                    serviceItemId = "unknown",
-                    entityId = titleId,
-                    available = true,
-                    price = 0,
-                    link = "unknown"
-                )
-            )
-        } else {
-            // Normal processing: extract streaming options and parse service-specific IDs
-            val streamingOptions: List<StreamingOptionDto> = dto.extractUsStreamingOptions()
-            streamingOptions.mapNotNull { it.toStreamingOptionEntity(titleId) }
-        }
-        report.externalIdsUpserted = db.streamingOptionDao().upsertAll(streamingOptionEntities)
+        val streamingOptions: List<StreamingOptionDto> = dto.extractUsStreamingOptions()
+        val streamingOptionEntities = streamingOptions.mapNotNull { it.toStreamingOptionEntity(titleId) }
+        val streamingOptionsUpserted = db.streamingOptionDao().upsertAll(streamingOptionEntities)
 
         // 3) Genres (name->entity), then cross-ref
-        val genreNames: List<String> = dto.toGenreNames() // mapper normalizes ids/names from response
-        val genreIds   = db.genreDao().upsertAllByName(genreNames)
+        val genreIds   = db.genreDao().upsertAllByName(dto.toGenreNames())
         val genreRefs  = genreIds.map { gid ->
             TitleGenreCrossRef(
                 titleId = titleId,
@@ -224,12 +366,9 @@ class LibraryRepository(
             )
         }
         val genreRefIds = db.titleGenreDao().upsertAll(genreRefs)
-        report.titleGenreRefs = genreRefIds.size
-        report.genresUpserted = genreIds.count { it > 0 } // count new rows if your DAO returns rowIds
 
         // 4) People (directors/cast/writers …), then cross-ref
-        val cast: List<PersonEntity> = dto.toCast()
-        val castPersonIds = db.personDao().upsertAll(cast)
+        val castPersonIds = db.personDao().upsertAll(dto.toCast())
         val castPersonRefs = castPersonIds.map { it ->
             TitlePersonCrossRef(
                 id = 0,
@@ -239,14 +378,11 @@ class LibraryRepository(
             )
         }
 
-        val directors: List<PersonEntity> = dto.toDirectors()
-        val directorPersonIds = db.personDao().upsertAll(directors)
+        val directorPersonIds = db.personDao().upsertAll(dto.toDirectors())
         val directorPersonRefs = directorPersonIds.map { it -> TitlePersonCrossRef(id = 0, titleId = titleId, personId = it, role = CreditRole.DIRECTOR ) }
 
         val personRefs = castPersonRefs + directorPersonRefs
         val personRefIds = db.titlePersonDao().upsertAll(personRefs)
-        report.titlePersonRefs = personRefIds.size
-        report.peopleUpserted = castPersonIds.count() + directorPersonIds.count()
 
 //        // 5) Episodes (for shows). Your mapper returns per-episode entities with titleId set.
 //        val episodes: List<EpisodeEntity> = dto.toEpisodes(titleId) // or emptyList for movies
@@ -254,11 +390,14 @@ class LibraryRepository(
 //            report.episodesUpserted = episodeDao.upsertAll(episodes)
 //        }
 
-        // 6) Optional: minimal streaming options (serviceId-only), if you persist them.
-        // If you decided to inline or skip, this can be omitted or kept in mapper side-effects.
-        // e.g., streamingOptionDao.upsertAll(dto.toStreamingOptions(titleId))
-
-        return report
+        return UpsertTitleReport(
+            titleIdsUpserted = listOf(titleId),
+            externalIdsUpserted = streamingOptionsUpserted,
+            genresUpserted = genreIds.count { it > 0 },
+            peopleUpserted = castPersonIds.count() + directorPersonIds.count(),
+            titleGenreRefs = genreRefIds.size,
+            titlePersonRefs = personRefIds.size
+        )
     }
 
 
@@ -266,10 +405,21 @@ class LibraryRepository(
         try {
             val titleDto = api.getTitle(monId)
 
-            db.withTransaction {
+            val upsertReport = db.withTransaction {
                 upsertOneTitleTree(titleDto)
             }
 
+            // Convert UpsertTitleReport to SyncReport
+            SyncReport(
+                pagesProcessed = 1,
+                titlesUpserted = 1,
+                titleIdsUpserted = upsertReport.titleIdsUpserted,
+                externalIdsUpserted = upsertReport.externalIdsUpserted,
+                genresUpserted = upsertReport.genresUpserted,
+                peopleUpserted = upsertReport.peopleUpserted,
+                titleGenreRefs = upsertReport.titleGenreRefs,
+                titlePersonRefs = upsertReport.titlePersonRefs
+            )
         } catch (e: Exception) {
             // Log error but don't throw - return empty report
             println("Error syncing title $monId: ${e.message}")
@@ -293,9 +443,8 @@ class LibraryRepository(
             }
 
         } catch (e: Exception) {
-            // Log error but don't throw - return empty report
+            // Log error but don't throw
             println("Error syncing $provider top shows: ${e.message}")
-            SyncReport()
         }
     }
 

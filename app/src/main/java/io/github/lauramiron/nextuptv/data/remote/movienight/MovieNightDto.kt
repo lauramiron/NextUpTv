@@ -38,6 +38,8 @@ data class StreamingOptionDto(
     val link: String?,
     val videoLink: String?,
     val price: PriceDto? = null,
+    val type: String? = null,
+    val addon: StreamingServiceDto? = null
 )
 
 data class StreamingServiceDto(

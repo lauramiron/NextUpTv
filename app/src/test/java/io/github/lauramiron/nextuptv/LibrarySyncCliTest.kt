@@ -66,77 +66,11 @@ class LibrarySyncCliTest {
      * @param maxPages Maximum number of pages to sync, or -1 for full sync (default)
      * @param resume If true, attempts to resume from the last sync's cursor; if false, starts from beginning (default)
      */
-    private suspend fun runSyncForService(service: StreamingService, maxPages: Int = -1, resume: Boolean = false) {
-        val serviceName = service.id.uppercase()
-        val syncType = if (maxPages == -1) "Full" else "Partial (First $maxPages pages)"
-
-        // Determine starting cursor based on resume parameter
-        val startCursor = if (resume) {
-            val lastSync = db.librarySyncMetadataDao().getLastSyncForService(service.id)
-            when {
-                lastSync == null -> {
-                    println("No previous sync found for $serviceName. Starting from beginning.")
-                    null
-                }
-                lastSync.success && lastSync.nextCursor == null -> {
-                    println("Last sync for $serviceName completed fully. Restarting from beginning.")
-                    null
-                }
-                else -> {
-                    println("Resuming $serviceName sync from cursor: ${lastSync.nextCursor}")
-                    lastSync.nextCursor
-                }
-            }
-        } else {
-            null
-        }
-
-        println("=== $syncType $serviceName Sync ${if (resume && startCursor != null) "(Resuming)" else ""} ===")
-        if (maxPages == -1 && startCursor == null) {
-            println("This will take several minutes. Be patient!")
-        }
-        println()
-
-        val startTime = System.currentTimeMillis()
-
+    private suspend fun trySyncService(service: StreamingService, maxPages: Int = -1, resume: Boolean = false) {
         try {
-            // Get initial count
-            val initialCount = db.titleDao().countAll()
-            println("Initial title count: $initialCount")
-            println()
-
-            // Run the sync with optional page limit and cursor
-            println("Starting sync...")
-            val report = repository.syncAll(catalogs = service.id, startCursor = startCursor, maxPages = maxPages)
-
-            // Print results
-            val finalCount = db.titleDao().countAll()
-            val elapsed = (System.currentTimeMillis() - startTime) / 1000.0
-
-            println()
-            println("=== Sync Complete ===")
-            println("Time elapsed: ${elapsed}s")
-            println()
-            println("=== Sync Report ===")
-            println("Pages processed: ${report.pages}")
-            println("Titles upserted: ${report.titlesUpserted}")
-            println("External IDs upserted: ${report.externalIdsUpserted}")
-            println("Genres upserted: ${report.genresUpserted}")
-            println("People upserted: ${report.peopleUpserted}")
-            println("Title-Genre refs: ${report.titleGenreRefs}")
-            println("Title-Person refs: ${report.titlePersonRefs}")
-            println()
-            println("Database title count: $initialCount -> $finalCount (+${finalCount - initialCount})")
-            println()
-            println("SUCCESS!")
-
+            repository.syncService(service, maxPages, resume)
         } catch (e: Exception) {
-            val elapsed = (System.currentTimeMillis() - startTime) / 1000.0
-            println()
-            println("=== Sync Failed ===")
-            println("Time elapsed: ${elapsed}s")
-            println("Error: ${e.message}")
-            e.printStackTrace()
+            // Error already printed by repository.syncAll()
             // Don't throw - let the test "pass" so you can see the output
         }
     }
@@ -149,7 +83,7 @@ class LibrarySyncCliTest {
      */
     @Test
     fun runFullNetflixSync() = runBlocking {
-        runSyncForService(StreamingService.NETFLIX)
+        trySyncService(StreamingService.NETFLIX)
     }
 
     /**
@@ -160,7 +94,7 @@ class LibrarySyncCliTest {
      */
     @Test
     fun runFullAppleSync() = runBlocking {
-        runSyncForService(StreamingService.APPLE)
+        trySyncService(StreamingService.APPLE)
     }
 
     /**
@@ -171,7 +105,7 @@ class LibrarySyncCliTest {
      */
     @Test
     fun runFullHboSync() = runBlocking {
-        runSyncForService(StreamingService.HBO)
+        trySyncService(StreamingService.HBO)
     }
 
     /**
@@ -182,7 +116,7 @@ class LibrarySyncCliTest {
      */
     @Test
     fun runFullPrimeSync() = runBlocking {
-        runSyncForService(StreamingService.PRIME, resume = true)
+        trySyncService(StreamingService.PRIME, resume = true)
     }
 
     /**
@@ -191,7 +125,7 @@ class LibrarySyncCliTest {
      */
     @Test
     fun runPartialNetflixSync() = runBlocking {
-        runSyncForService(StreamingService.NETFLIX, maxPages = 5)
+        trySyncService(StreamingService.NETFLIX, maxPages = 5)
     }
 
     /**
@@ -200,7 +134,7 @@ class LibrarySyncCliTest {
      */
     @Test
     fun runPartialAppleSync() = runBlocking {
-        runSyncForService(StreamingService.APPLE, maxPages = 5, resume = true)
+        trySyncService(StreamingService.APPLE, maxPages = 5, resume = true)
     }
     /**
      * Partial Prime sync - limits to a specific number of pages.
@@ -208,7 +142,7 @@ class LibrarySyncCliTest {
      */
     @Test
     fun runPartialPrimeSync() = runBlocking {
-        runSyncForService(StreamingService.PRIME, maxPages = 400, resume = true)
+        trySyncService(StreamingService.PRIME, maxPages = 400, resume = true)
     }
     /**
      * Partial hulu sync - limits to a specific number of pages.
@@ -216,7 +150,7 @@ class LibrarySyncCliTest {
      */
     @Test
     fun runPartialHuluSync() = runBlocking {
-        runSyncForService(StreamingService.HULU, maxPages = 1, resume = false)
+        trySyncService(StreamingService.HULU, maxPages = 1, resume = false)
     }
     /**
      * Partial Hbo sync - limits to a specific number of pages.
@@ -224,7 +158,7 @@ class LibrarySyncCliTest {
      */
     @Test
     fun runPartialHboSync() = runBlocking {
-        runSyncForService(StreamingService.HBO, maxPages = 50, resume = true)
+        trySyncService(StreamingService.HBO, maxPages = 50, resume = true)
     }
     /**
      * Partial Hbo sync - limits to a specific number of pages.
@@ -232,7 +166,7 @@ class LibrarySyncCliTest {
      */
     @Test
     fun runPartialParamountSync() = runBlocking {
-        runSyncForService(StreamingService.PARAMOUNT, maxPages = 100, resume = true)
+        trySyncService(StreamingService.PARAMOUNT, maxPages = 30, resume = true)
     }
     /**
      * Syncs top shows for a single streaming service.

@@ -167,6 +167,24 @@ private fun TitleDto.isSeries(): Boolean =
     this.showType.equals("series", true)
 
 fun StreamingOptionDto.toStreamingOptionEntity(titleId: Long): StreamingOptionEntity? {
+    // Handle addon streaming options
+    if (type == "addon") {
+        // Only process HBO addons, skip all others
+        if (addon?.id?.lowercase() != "hbomaxus") {
+            return null
+        }
+        // Process HBO addon
+        return StreamingOptionEntity(
+            service = StreamingService.HBO,
+            serviceItemId = "unknown",
+            entityId = titleId,
+            available = true,
+            price = 0,
+            link = "unknown"
+        )
+    }
+
+    // Normal processing for non-addon streaming options
     val serviceString = service.id.lowercase()
     val streamingService = StreamingService.fromString(serviceString) ?: return null // skip unsupported services
 
